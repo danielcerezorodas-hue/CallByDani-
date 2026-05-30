@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 
+import { supabase } from '../supabase'
+
 const T = {
   bg: "#0a1409",
   surface: "#0f1d0e",
@@ -102,9 +104,14 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  function handleSubmit() {
+ async function handleSubmit() {
     if (!email) return;
-    setSubmitted(true);
+    const { data, error } = await supabase
+      .from('clients')
+      .insert([{ email: email, status: 'lead' }])
+    console.log('error:', error)
+    console.log('data:', data)
+    if (!error) setSubmitted(true);
   }
 
   return (
