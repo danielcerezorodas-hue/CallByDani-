@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import AgentLogin from "../components/AgentLogin";
 import AgentPanel from "../components/AgentPanel";
