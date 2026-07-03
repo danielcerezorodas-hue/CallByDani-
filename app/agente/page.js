@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
 import AgentLogin from "../components/AgentLogin";
-import AgentPanel from "../components/agentpanel";
+import AgentPanel from "../components/AgentPanel";
 import { supabase } from "../supabase";
 
 export default function AgentePage() {
