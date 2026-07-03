@@ -190,7 +190,7 @@ export default function LandingPage() {
             <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 14, padding: "16px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", letterSpacing: 0.3, boxShadow: `0 0 40px ${T.green}30` }}>
               Start Free — 7 Days
             </button>
-            <button style={{ background: T.creamDim, color: T.cream, border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", backdropFilter: "blur(10px)" }}>
+            <button onClick={() => window.open('https://youtu.be/tuy2M6-GRac', '_blank')} style={{ background: T.creamDim, color: T.cream, border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", backdropFilter: "blur(10px)" }}>
               ▶ Watch Demo
             </button>
           </div>
