@@ -148,7 +148,7 @@ export default function LandingPage() {
               onMouseEnter={e => e.target.style.color = T.cream}
               onMouseLeave={e => e.target.style.color = T.light}>{item}</a>
           ))}
-          <button style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             Get Started
           </button>
         </div>
@@ -187,7 +187,7 @@ export default function LandingPage() {
 
           {/* CTA */}
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginBottom: 64 }}>
-            <button style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 14, padding: "16px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", letterSpacing: 0.3, boxShadow: `0 0 40px ${T.green}30` }}>
+            <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 14, padding: "16px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", letterSpacing: 0.3, boxShadow: `0 0 40px ${T.green}30` }}>
               Start Free — 7 Days
             </button>
             <button style={{ background: T.creamDim, color: T.cream, border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", backdropFilter: "blur(10px)" }}>
