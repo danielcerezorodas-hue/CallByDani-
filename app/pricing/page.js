@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { supabase } from "../supabase";
 
 const PLANS = [
   {
@@ -29,13 +29,19 @@ const PLANS = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(null);
+  const [emailSaved, setEmailSaved] = useState(false);
   const [email, setEmail] = useState("");
 
-  async function handleCheckout(planId) {
+async function handleCheckout(planId) {
     if (!email) {
       alert("Please enter your email first");
       return;
     }
+
+    // Save email to Supabase
+    await supabase.from('clients').upsert([{ email: email, plan: planId, status: 'lead' }]);
+    setEmailSaved(true);
+
     setLoading(planId);
     try {
       const res = await fetch("/api/checkout", {
