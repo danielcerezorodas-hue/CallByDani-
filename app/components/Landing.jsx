@@ -129,31 +129,39 @@ export default function LandingPage() {
 
       {/* ── NAVBAR ── */}
       <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        padding: "0 48px",
-        background: activeNav ? `${T.surface}ee` : "transparent",
-        borderBottom: activeNav ? `1px solid ${T.border}` : "1px solid transparent",
-        backdropFilter: activeNav ? "blur(20px)" : "none",
-        transition: "all 0.4s ease",
-        display: "flex", alignItems: "center", justifyContent: "space-between", height: 68,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>☎</div>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 18, color: T.cream }}>CallByDani</span>
-          <span style={{ color: T.muted, fontSize: 9, fontWeight: 700, letterSpacing: 2, marginTop: 2 }}>AI</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          {["Features", "Pricing", "Who it's for"].map(item => (
-            <a key={item} href="#" style={{ color: T.light, fontSize: 13, fontWeight: 500, textDecoration: "none", transition: "color 0.2s" }}
-              onMouseEnter={e => e.target.style.color = T.cream}
-              onMouseLeave={e => e.target.style.color = T.light}>{item}</a>
-          ))}
-          <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 10, padding: "9px 22px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-          <button onClick={() => window.location.href = '/login'} style={{ background: "transparent", color: "#8aaa8d", border: "1px solid #1e3320", borderRadius: 10, padding: "9px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginRight: 8 }}>Sign In</button> 
-            Get Started
-          </button>
-        </div>
-      </nav>
+  position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+  padding: "0 32px",
+  background: activeNav ? `${T.surface}ee` : "transparent",
+  borderBottom: activeNav ? `1px solid ${T.border}` : "1px solid transparent",
+  backdropFilter: activeNav ? "blur(20px)" : "none",
+  transition: "all 0.4s ease",
+  display: "flex", alignItems: "center", justifyContent: "space-between", height: 68,
+}}>
+  {/* Logo */}
+  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>☎</div>
+    <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 18, color: T.cream }}>CallByDani</span>
+    <span style={{ color: T.muted, fontSize: 9, fontWeight: 700, letterSpacing: 2, marginTop: 2 }}>AI</span>
+  </div>
+
+  {/* Desktop Menu */}
+  <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+    {[["Features", "#"], ["Pricing", "/pricing"], ["Who it's for", "#"], ["Contact", "/contact"]].map(([label, href]) => (
+      <a key={label} href={href} style={{ color: T.light, fontSize: 13, fontWeight: 500, textDecoration: "none", transition: "color 0.2s" }}
+        onMouseEnter={e => e.target.style.color = T.cream}
+        onMouseLeave={e => e.target.style.color = T.light}>{label}</a>
+    ))}
+    <button onClick={() => window.location.href = '/agente'} style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}`, borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+      Agent Sign In
+    </button>
+    <button onClick={() => window.location.href = '/login'} style={{ background: "transparent", color: T.light, border: `1px solid ${T.border}`, borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+      Sign In
+    </button>
+    <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 10, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+      Get Started
+    </button>
+  </div>
+</nav>
 
       {/* ── HERO ── */}
       <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "120px 48px 80px" }}>
