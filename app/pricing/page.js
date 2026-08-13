@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { supabase } from "../supabase";
 
 const PLANS = [
@@ -83,6 +84,23 @@ async function handleCheckout(planId) {
               outline: "none", fontFamily: "inherit", boxSizing: "border-box"
             }}
           />
+          <button onClick={async () => {
+          console.log("button clicked", email);  
+  if (!email) return;
+  await supabase.from('clients').upsert([{ email: email, status: 'lead' }]);
+  setEmailSaved(true);
+}} style={{
+  marginTop: 10, background: "transparent", color: "#c8a84b",
+  border: "1px solid #c8a84b40", borderRadius: 10, padding: "9px 20px",
+  fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", width: "100%", maxWidth: 360
+}}>
+  Notify me → 
+</button>
+{emailSaved && (
+  <div style={{ color: "#3d9e5f", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
+    ✓ Got it! Select a plan below to get started.
+  </div>
+)}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>

@@ -1,0 +1,160 @@
+"use client";
+
+import { useState } from "react";
+import { supabase } from "../supabase";
+
+const BUSINESS_TYPES = [
+  "Plumbing / HVAC",
+  "Law Firm",
+  "Real Estate",
+  "Medical / Dental",
+  "Restaurant",
+  "Executive / CEO",
+  "E-commerce",
+  "Construction",
+  "Insurance",
+  "Other"
+];
+
+const PLANS = ["Starter - $497/mo", "Business - $897/mo", "Executive - $1,497/mo", "Not sure yet"];
+
+export default function ContactPage() {
+  const [form, setForm] = useState({
+    firstName: "", lastName: "", email: "", phone: "",
+    company: "", businessType: "", calls: "", plan: "", message: ""
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  function update(key, value) {
+    setForm(p => ({ ...p, [key]: value }));
+  }
+
+  async function handleSubmit() {
+    if (!form.firstName || !form.email || !form.businessType) {
+      setError("Please fill in the required fields.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.from('clients').upsert([{
+      email: form.email,
+      first_name: form.firstName,
+      last_name: form.lastName,
+      phone: form.phone,
+      company: form.company,
+      sector: form.businessType,
+      plan: form.plan,
+      status: 'contact'
+    }]);
+    if (error) {
+      setError("Something went wrong. Please try again.");
+    } else {
+      setSubmitted(true);
+    }
+    setLoading(false);
+  }
+
+  if (submitted) return (
+    <div style={{ background: "#0a1409", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif" }}>
+      <div style={{ background: "#162318", border: "1px solid #3d6b41", borderRadius: 20, padding: "48px 40px", textAlign: "center", maxWidth: 480 }}>
+        <div style={{ fontSize: 60, marginBottom: 20 }}>🎉</div>
+        <div style={{ fontSize: 28, fontWeight: 900, color: "#f2ead8", marginBottom: 12 }}>We'll be in touch!</div>
+        <div style={{ color: "#8aaa8d", fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
+          Thank you {form.firstName}. One of our team members will contact you within 24 hours to get you started.
+        </div>
+        <a href="/" style={{ display: "block", padding: "13px 0", background: "linear-gradient(135deg, #3d9e5f, #c8a84b)", color: "#0a1409", borderRadius: 12, fontWeight: 900, fontSize: 15, textDecoration: "none" }}>
+          Back to Home →
+        </a>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ background: "#0a1409", minHeight: "100vh", fontFamily: "sans-serif", color: "#f2ead8", padding: "60px 24px" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none", marginBottom: 32 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #3d9e5f, #c8a84b)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>☎</div>
+            <span style={{ fontWeight: 900, fontSize: 17, color: "#f2ead8" }}>CallByDani</span>
+          </a>
+          <h1 style={{ fontSize: 36, fontWeight: 900, color: "#f2ead8", marginBottom: 12, lineHeight: 1.2 }}>
+            Let's get you started
+          </h1>
+          <p style={{ color: "#5a7a5d", fontSize: 15 }}>Fill out the form and we'll contact you within 24 hours.</p>
+        </div>
+
+        <div style={{ background: "#162318", border: "1px solid #1e3320", borderRadius: 20, padding: "40px 36px" }}>
+          {/* Name */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+            {[["First Name *", "firstName", "John"], ["Last Name", "lastName", "Smith"]].map(([label, key, ph]) => (
+              <div key={key}>
+                <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
+                <input value={form[key]} onChange={e => update(key, e.target.value)} placeholder={ph}
+                  style={{ width: "100%", background: "#0f1d0e", border: "1px solid #1e3320", borderRadius: 10, color: "#f2ead8", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Email & Phone */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+            {[["Email *", "email", "john@company.com", "email"], ["Phone", "phone", "+1 (832) 000-0000", "tel"]].map(([label, key, ph, type]) => (
+              <div key={key}>
+                <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
+                <input type={type} value={form[key]} onChange={e => update(key, e.target.value)} placeholder={ph}
+                  style={{ width: "100%", background: "#0f1d0e", border: "1px solid #1e3320", borderRadius: 10, color: "#f2ead8", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Company */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>COMPANY NAME</div>
+            <input value={form.company} onChange={e => update("company", e.target.value)} placeholder="ABC Plumbing Co."
+              style={{ width: "100%", background: "#0f1d0e", border: "1px solid #1e3320", borderRadius: 10, color: "#f2ead8", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+          </div>
+
+          {/* Business Type */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>BUSINESS TYPE *</div>
+            <select value={form.businessType} onChange={e => update("businessType", e.target.value)}
+              style={{ width: "100%", background: "#0f1d0e", border: "1px solid #1e3320", borderRadius: 10, color: form.businessType ? "#f2ead8" : "#5a7a5d", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", appearance: "none" }}>
+              <option value="">Select your industry...</option>
+              {BUSINESS_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+
+         <div style={{ marginBottom: 18 }}>
+  <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>MONTHLY CALLS (APPROX.)</div>
+  <input value={form.calls} onChange={e => update("calls", e.target.value)} placeholder="e.g. 150"
+    style={{ width: "100%", background: "#0f1d0e", border: "1px solid #1e3320", borderRadius: 10, color: "#f2ead8", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+</div>
+
+          {/* Message */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>MESSAGE (OPTIONAL)</div>
+            <textarea value={form.message} onChange={e => update("message", e.target.value)}
+              placeholder="Tell us anything else about your business needs..."
+              style={{ width: "100%", background: "#0f1d0e", border: "1px solid #1e3320", borderRadius: 10, color: "#f2ead8", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box", minHeight: 80, resize: "vertical", lineHeight: 1.6 }} />
+          </div>
+
+          {error && <div style={{ color: "#c05050", fontSize: 13, marginBottom: 16 }}>⚠ {error}</div>}
+
+          <button onClick={handleSubmit} disabled={loading} style={{
+            width: "100%", padding: "14px 0", background: "linear-gradient(135deg, #3d9e5f, #c8a84b)",
+            color: "#0a1409", border: "none", borderRadius: 12, fontWeight: 900, fontSize: 15,
+            cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit"
+          }}>
+            {loading ? "Sending..." : "Get Started — We'll Contact You →"}
+          </button>
+
+          <div style={{ textAlign: "center", marginTop: 16, color: "#5a7a5d", fontSize: 12 }}>
+            No commitment required · We'll reach out within 24 hours
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
