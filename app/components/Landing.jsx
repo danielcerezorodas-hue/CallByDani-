@@ -50,11 +50,12 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
-
+  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+     window.removeEventListener("resize", onResize);
   }, []);
 
   async function handleSubmit() {
@@ -94,7 +95,7 @@ export default function LandingPage() {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>☎</div>
           <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: C.navy }}>CallByDani</span>
         </a>
-        <div style={{ display: typeof window !== 'undefined' && window.innerWidth < 768 ? "none" : "flex", alignItems: "center", gap: 24 }}>
+        <div style={{ display: isMobile ? "none" : "flex"}}>
           {navLinks.map(l => (
             <a key={l.label} href={l.href} style={{ color: C.muted, fontSize: 14, fontWeight: 500, textDecoration: "none" }}
               onMouseEnter={e => e.target.style.color = C.navy}
