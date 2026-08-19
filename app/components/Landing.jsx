@@ -1,384 +1,271 @@
-"use client"; 
+"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
-import { supabase } from '../supabase'
-
-const T = {
-  bg: "#0a1409",
-  surface: "#0f1d0e",
-  card: "#162318",
-  border: "#1e3320",
-  borderLight: "#2d5232",
-  cream: "#f2ead8",
-  creamDim: "#f2ead810",
-  creamSoft: "#d8cdb5",
-  gold: "#c8a84b",
-  goldLight: "#e8c870",
-  goldDim: "#c8a84b18",
-  green: "#3d9e5f",
-  greenLight: "#5dbe7f",
-  greenDim: "#3d9e5f18",
-  text: "#f2ead8",
-  muted: "#5a7a5d",
-  light: "#8aaa8d",
+const C = {
+  navy: "#1a2e4a",
+  navyDark: "#0f1e30",
+  navyLight: "#243d5c",
+  blue: "#0ea5e9",
+  blueDim: "#0ea5e915",
+  blueMid: "#0ea5e930",
+  sky: "#38bdf8",
+  white: "#ffffff",
+  offWhite: "#f8fafc",
+  gray: "#f1f5f9",
+  border: "#e2e8f0",
+  text: "#1e293b",
+  muted: "#64748b",
+  light: "#94a3b8",
+  green: "#22c55e",
+  greenDim: "#22c55e15",
+  gold: "#f59e0b",
 };
 
-const PLANS = [
-  {
-    name: "Starter",
-    price: "$299",
-    desc: "Perfect for small local businesses",
-    features: ["100 calls/month", "1 dedicated agent", "AI call summaries", "Email notifications", "Business hours setup"],
-    cta: "Start Free Trial",
-    highlight: false,
-  },
-  {
-    name: "Business",
-    price: "$599",
-    desc: "Most popular for growing companies",
-    features: ["300 calls/month", "2 dedicated agents", "AI Copilot included", "WhatsApp notifications", "API integrations", "Priority support"],
-    cta: "Get Started",
-    highlight: true,
-  },
-  {
-    name: "Executive",
-    price: "$1,100",
-    desc: "VIP assistant for executives & realtors",
-    features: ["Unlimited calls", "Personal VIP agent", "Calendar management", "WhatsApp AI summaries", "CRM sync", "Dedicated account manager"],
-    cta: "Contact Sales",
-    highlight: false,
-  },
+const STATS = [
+  { value: "98%", label: "Resolution rate" },
+  { value: "< 2s", label: "Answer time" },
+  { value: "24/7", label: "Coverage" },
+  { value: "EN/ES", label: "Bilingual" },
 ];
 
 const SECTORS = [
-  { icon: "🔧", name: "Plumbers & HVAC", desc: "Never miss an emergency call again" },
-  { icon: "⚖️", name: "Law Firms", desc: "Screen leads, schedule consultations" },
-  { icon: "🏠", name: "Real Estate", desc: "Confirm showings while you're in the field" },
+  { icon: "🔧", name: "Plumbers & HVAC", desc: "Never miss an emergency call" },
+  { icon: "⚖️", name: "Law Firms", desc: "Screen leads, schedule consults" },
+  { icon: "🏠", name: "Real Estate", desc: "Confirm showings on the go" },
   { icon: "🏥", name: "Medical Clinics", desc: "Reschedule patients after hours" },
-  { icon: "💼", name: "Executives & CEOs", desc: "VIP gatekeeper for your time" },
-  { icon: "🍽️", name: "Restaurants", desc: "Reservations, orders, and FAQs handled" },
+  { icon: "💼", name: "Executives", desc: "VIP gatekeeper for your time" },
+  { icon: "🍽️", name: "Restaurants", desc: "Reservations & orders handled" },
 ];
 
-const STATS = [
-  { value: "98%", label: "Call resolution rate" },
-  { value: "< 2s", label: "Average answer time" },
-  { value: "5–7x", label: "Agents per client" },
-  { value: "24/7", label: "Coverage available" },
+const STEPS = [
+  { n: "01", title: "Register online", desc: "Create your account and choose your plan in under 3 minutes." },
+  { n: "02", title: "Upload your documents", desc: "Policies, FAQs, price lists — AI trains your agents instantly." },
+  { n: "03", title: "Forward your number", desc: "One redirect and your calls go straight to your bilingual team." },
 ];
-
-function useInView(threshold = 0.15) {
-  const ref = useRef(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true); }, { threshold });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-  return [ref, inView];
-}
-
-function FadeIn({ children, delay = 0, style = {} }) {
-  const [ref, inView] = useInView();
-  return (
-    <div ref={ref} style={{
-      opacity: inView ? 1 : 0,
-      transform: inView ? "translateY(0)" : "translateY(28px)",
-      transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
-      ...style
-    }}>
-      {children}
-    </div>
-  );
-}
 
 export default function LandingPage() {
-  const [activeNav, setActiveNav] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [hoveredPlan, setHoveredPlan] = useState(null);
 
   useEffect(() => {
-    const onScroll = () => setActiveNav(window.scrollY > 60);
+    const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
- async function handleSubmit() {
+  async function handleSubmit() {
     if (!email) return;
-    const { data, error } = await supabase
-      .from('clients')
-      .insert([{ email: email, status: 'lead' }])
-    console.log('error:', error)
-    console.log('data:', data)
-    if (!error) setSubmitted(true);
+    await supabase.from("clients").upsert([{ email, status: "lead" }]);
+    setSubmitted(true);
   }
 
+  const navLinks = [
+    { label: "Features", href: "#features" },
+    { label: "How it works", href: "#how" },
+    { label: "Who it's for", href: "#who" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Contact", href: "/contact" },
+  ];
+
   return (
-    <div style={{ background: T.bg, color: T.text, fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <div style={{ background: C.white, fontFamily: "'DM Sans', sans-serif", color: C.text, overflowX: "hidden" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::selection { background: ${T.gold}40; color: ${T.cream}; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: ${T.border}; border-radius: 4px; }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-        @keyframes shimmer { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
-        @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        html { scroll-behavior: smooth; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
 
-      {/* ── NAVBAR ── */}
+      {/* NAVBAR */}
       <nav style={{
-  position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-  padding: "0 32px",
-  background: activeNav ? `${T.surface}ee` : "transparent",
-  borderBottom: activeNav ? `1px solid ${T.border}` : "1px solid transparent",
-  backdropFilter: activeNav ? "blur(20px)" : "none",
-  transition: "all 0.4s ease",
-  display: "flex", alignItems: "center", justifyContent: "space-between", height: 68,
-}}>
-  {/* Logo */}
-  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-    <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>☎</div>
-    <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 18, color: T.cream }}>CallByDani</span>
-    <span style={{ color: T.muted, fontSize: 9, fontWeight: 700, letterSpacing: 2, marginTop: 2 }}>AI</span>
-  </div>
-
-  {/* Desktop Menu */}
-  <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-    {[["Features", "#"], ["Pricing", "/pricing"], ["Who it's for", "#"], ["Contact", "/contact"]].map(([label, href]) => (
-      <a key={label} href={href} style={{ color: T.light, fontSize: 13, fontWeight: 500, textDecoration: "none", transition: "color 0.2s" }}
-        onMouseEnter={e => e.target.style.color = T.cream}
-        onMouseLeave={e => e.target.style.color = T.light}>{label}</a>
-    ))}
-    <button onClick={() => window.location.href = '/agente'} style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}`, borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
-      Agent Sign In
-    </button>
-    <button onClick={() => window.location.href = '/login'} style={{ background: "transparent", color: T.light, border: `1px solid ${T.border}`, borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-      Sign In
-    </button>
-    <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 10, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-      Get Started
-    </button>
-  </div>
-</nav>
-
-      {/* ── HERO ── */}
-      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "120px 48px 80px" }}>
-        {/* Background orbs */}
-        <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
-          <div style={{ position: "absolute", top: "15%", left: "8%", width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle, ${T.green}20, transparent 70%)`, filter: "blur(60px)", animation: "float 8s ease-in-out infinite" }} />
-          <div style={{ position: "absolute", bottom: "20%", right: "10%", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${T.gold}15, transparent 70%)`, filter: "blur(50px)", animation: "float 10s ease-in-out infinite reverse" }} />
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 600, height: 600, borderRadius: "50%", background: `radial-gradient(circle, ${T.green}08, transparent 70%)`, filter: "blur(80px)" }} />
-          {/* Decorative ring */}
-          <div style={{ position: "absolute", top: "10%", right: "5%", width: 220, height: 220, borderRadius: "50%", border: `1px solid ${T.border}`, opacity: 0.5, animation: "spin-slow 30s linear infinite" }}>
-            <div style={{ position: "absolute", top: -4, left: "50%", width: 8, height: 8, borderRadius: "50%", background: T.gold, transform: "translateX(-50%)" }} />
-          </div>
-          <div style={{ position: "absolute", top: "12%", right: "6.5%", width: 190, height: 190, borderRadius: "50%", border: `1px solid ${T.borderLight}`, opacity: 0.3 }} />
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
+        background: scrolled ? "rgba(255,255,255,0.95)" : "transparent",
+        borderBottom: scrolled ? `1px solid ${C.border}` : "none",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        transition: "all 0.3s ease",
+        padding: "0 24px", height: 64,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>☎</div>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: C.navy }}>CallByDani</span>
+        </a>
+        <div style={{ display: typeof window !== 'undefined' && window.innerWidth < 768 ? "none" : "flex", alignItems: "center", gap: 24 }}>
+          {navLinks.map(l => (
+            <a key={l.label} href={l.href} style={{ color: C.muted, fontSize: 14, fontWeight: 500, textDecoration: "none" }}
+              onMouseEnter={e => e.target.style.color = C.navy}
+              onMouseLeave={e => e.target.style.color = C.muted}>{l.label}</a>
+          ))}
         </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button onClick={() => window.location.href = "/agente"} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontWeight: 600, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Agent Login</button>
+          <button onClick={() => window.location.href = "/login"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
+          <button onClick={() => window.location.href = "/pricing"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Get Started</button>
+          <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 5, marginLeft: 4 }}>
+            <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+            <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
+            <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+          </button>
+        </div>
+      </nav>
 
-        <div style={{ maxWidth: 860, textAlign: "center", position: "relative" }}>
-          {/* Eyebrow */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: T.greenDim, border: `1px solid ${T.green}40`, borderRadius: 20, padding: "6px 18px", marginBottom: 32 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.green }} />
-            <span style={{ color: T.green, fontSize: 12, fontWeight: 700, letterSpacing: 1.2 }}>BILINGUAL CALL CENTER · POWERED BY AI</span>
+      {/* DROPDOWN */}
+      {menuOpen && (
+        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 999, background: C.white, borderBottom: `1px solid ${C.border}`, boxShadow: "0 8px 32px rgba(0,0,0,0.1)", padding: "20px 24px 28px", animation: "fadeUp 0.2s ease" }}>
+          {navLinks.map(l => (
+            <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "13px 0", color: C.text, fontSize: 16, fontWeight: 600, textDecoration: "none", borderBottom: `1px solid ${C.border}` }}>{l.label}</a>
+          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
+            <button onClick={() => { window.location.href = "/login"; setMenuOpen(false); }} style={{ background: "transparent", color: C.navy, border: `1px solid ${C.navy}`, borderRadius: 10, padding: "12px 0", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>Client Sign In</button>
+            <button onClick={() => { window.location.href = "/agente"; setMenuOpen(false); }} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 0", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>Agent Login</button>
+            <button onClick={() => { window.location.href = "/pricing"; setMenuOpen(false); }} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 10, padding: "13px 0", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>Get Started →</button>
           </div>
+        </div>
+      )}
 
-          {/* Headline */}
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(44px, 6vw, 76px)", fontWeight: 900, lineHeight: 1.08, color: T.cream, marginBottom: 12 }}>
+      {/* HERO */}
+      <section style={{ background: `linear-gradient(160deg, ${C.navyDark} 0%, ${C.navyLight} 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 24px 80px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "10%", right: "-5%", width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle, ${C.blue}20, transparent 70%)`, filter: "blur(60px)" }} />
+        <div style={{ maxWidth: 780, margin: "0 auto", textAlign: "center", position: "relative" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.3)", borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.blue }} />
+            <span style={{ color: C.sky, fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>BILINGUAL CALL CENTER · AI POWERED</span>
+          </div>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(38px, 6vw, 68px)", fontWeight: 900, color: C.white, lineHeight: 1.1, marginBottom: 20 }}>
             Your calls answered.<br />
-            <span style={{ fontStyle: "italic", background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Every single one.</span>
+            <span style={{ fontStyle: "italic", color: C.sky }}>Every single one.</span>
           </h1>
-
-          <p style={{ color: T.light, fontSize: 18, lineHeight: 1.7, maxWidth: 560, margin: "0 auto 48px", fontWeight: 400 }}>
-            Real bilingual agents in Guatemala, trained by AI on your business policies. Ready in minutes. No hiring, no training, no overhead.
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "clamp(15px, 2vw, 18px)", lineHeight: 1.7, maxWidth: 520, margin: "0 auto 44px" }}>
+            Real bilingual agents trained by AI on your business. Ready in minutes. No hiring, no training, no overhead.
           </p>
-
-          {/* CTA */}
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginBottom: 64 }}>
-            <button onClick={() => window.location.href = '/pricing'} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 14, padding: "16px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", letterSpacing: 0.3, boxShadow: `0 0 40px ${T.green}30` }}>
-              Start Free — 7 Days
-            </button>
-            <button style={{ background: T.creamDim, color: T.cream, border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px 32px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", backdropFilter: "blur(10px)" }}>
-              ▶ Watch Demo
-            </button>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 60 }}>
+            <button onClick={() => window.location.href = "/pricing"} style={{ background: C.blue, color: C.white, border: "none", borderRadius: 12, padding: "15px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", boxShadow: `0 0 40px ${C.blue}40` }}>Start Free — 7 Days</button>
+            <button onClick={() => window.location.href = "/contact"} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "15px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>Talk to Sales</button>
           </div>
-
-          {/* Social proof */}
-          <div style={{ display: "flex", gap: 40, justifyContent: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 32, justifyContent: "center", flexWrap: "wrap" }}>
             {STATS.map((s, i) => (
               <div key={i} style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: T.cream }}>{s.value}</div>
-                <div style={{ color: T.muted, fontSize: 12, marginTop: 3, letterSpacing: 0.5 }}>{s.label}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: C.white }}>{s.value}</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 3 }}>{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section style={{ padding: "100px 48px", borderTop: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <FadeIn>
-            <div style={{ textAlign: "center", marginBottom: 72 }}>
-              <div style={{ color: T.gold, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 14 }}>HOW IT WORKS</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, fontWeight: 900, color: T.cream, lineHeight: 1.15 }}>
-                Up and running<br /><span style={{ fontStyle: "italic", color: T.gold }}>in under 10 minutes</span>
-              </h2>
-            </div>
-          </FadeIn>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
-            {[
-              { step: "01", title: "Register your company", desc: "Fill in your business name, type, and hours. Takes 3 minutes." },
-              { step: "02", title: "Upload your documents", desc: "Policies, FAQs, price lists — our AI reads and trains agents instantly." },
-              { step: "03", title: "Forward your number", desc: "One click and your calls route to your dedicated bilingual agents." },
-            ].map((item, i) => (
-              <FadeIn key={i} delay={i * 0.15}>
-                <div style={{ padding: "36px 32px", background: T.card, border: `1px solid ${T.border}`, borderRadius: i === 0 ? "18px 0 0 18px" : i === 2 ? "0 18px 18px 0" : 0, position: "relative", overflow: "hidden" }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 72, fontWeight: 900, color: T.green, opacity: 0.08, position: "absolute", top: -8, right: 16, lineHeight: 1 }}>{item.step}</div>
-                  <div style={{ color: T.gold, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 16 }}>STEP {item.step}</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: T.cream, marginBottom: 12, lineHeight: 1.3 }}>{item.title}</div>
-                  <div style={{ color: T.light, fontSize: 14, lineHeight: 1.7 }}>{item.desc}</div>
-                  {i < 2 && <div style={{ position: "absolute", right: -1, top: "50%", transform: "translateY(-50%)", width: 2, height: 40, background: `linear-gradient(${T.green}, ${T.gold})`, zIndex: 2 }} />}
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── WHO IT'S FOR ── */}
-      <section style={{ padding: "100px 48px", borderTop: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <FadeIn>
-            <div style={{ textAlign: "center", marginBottom: 60 }}>
-              <div style={{ color: T.gold, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 14 }}>WHO IT'S FOR</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, fontWeight: 900, color: T.cream }}>
-                Built for businesses that<br /><span style={{ fontStyle: "italic", color: T.greenLight }}>can't afford to miss a call</span>
-              </h2>
-            </div>
-          </FadeIn>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-            {SECTORS.map((s, i) => (
-              <FadeIn key={i} delay={i * 0.1}>
-                <div style={{
-                  background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: "26px 24px",
-                  transition: "all 0.25s", cursor: "default"
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = T.borderLight; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.background = T.cardHover; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = T.card; }}
-                >
-                  <div style={{ fontSize: 32, marginBottom: 14 }}>{s.icon}</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: T.cream, marginBottom: 8 }}>{s.name}</div>
-                  <div style={{ color: T.muted, fontSize: 13, lineHeight: 1.6 }}>{s.desc}</div>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section style={{ padding: "100px 48px", borderTop: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <FadeIn>
-            <div style={{ textAlign: "center", marginBottom: 64 }}>
-              <div style={{ color: T.gold, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 14 }}>PRICING</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, fontWeight: 900, color: T.cream }}>
-                Simple, transparent<br /><span style={{ fontStyle: "italic", color: T.gold }}>monthly plans</span>
-              </h2>
-              <p style={{ color: T.muted, fontSize: 15, marginTop: 14 }}>No setup fees. Cancel anytime. 7-day free trial on all plans.</p>
-            </div>
-          </FadeIn>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            {PLANS.map((plan, i) => (
-              <FadeIn key={i} delay={i * 0.12}>
-                <div
-                  onMouseEnter={() => setHoveredPlan(i)}
-                  onMouseLeave={() => setHoveredPlan(null)}
-                  style={{
-                    background: plan.highlight ? `linear-gradient(160deg, #1f3a22, #162a19)` : T.card,
-                    border: `1px solid ${plan.highlight ? T.borderLight : hoveredPlan === i ? T.borderLight : T.border}`,
-                    borderRadius: 20, padding: "36px 28px", position: "relative", overflow: "hidden",
-                    transform: plan.highlight ? "scale(1.03)" : hoveredPlan === i ? "translateY(-4px)" : "none",
-                    transition: "all 0.25s", boxShadow: plan.highlight ? `0 0 60px ${T.green}20` : "none"
-                  }}
-                >
-                  {plan.highlight && (
-                    <div style={{ position: "absolute", top: 16, right: 16, background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, borderRadius: 20, padding: "3px 14px", fontSize: 11, fontWeight: 900, letterSpacing: 0.5 }}>
-                      POPULAR
-                    </div>
-                  )}
-                  <div style={{ color: T.muted, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 10 }}>{plan.name.toUpperCase()}</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 48, fontWeight: 900, color: plan.highlight ? T.cream : T.creamSoft, lineHeight: 1, marginBottom: 4 }}>{plan.price}</div>
-                  <div style={{ color: T.muted, fontSize: 12, marginBottom: 24 }}>/month · billed monthly</div>
-                  <div style={{ color: T.light, fontSize: 13, marginBottom: 28 }}>{plan.desc}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
-                    {plan.features.map((f, j) => (
-                      <div key={j} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ color: plan.highlight ? T.green : T.gold, fontSize: 14, flexShrink: 0 }}>✓</span>
-                        <span style={{ color: T.light, fontSize: 13 }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <button style={{
-                    width: "100%", padding: "13px 0", borderRadius: 12, fontWeight: 800, fontSize: 14,
-                    cursor: "pointer", fontFamily: "'Playfair Display', serif", letterSpacing: 0.3,
-                    background: plan.highlight ? `linear-gradient(135deg, ${T.green}, ${T.gold})` : "transparent",
-                    color: plan.highlight ? T.bg : T.cream,
-                    border: plan.highlight ? "none" : `1px solid ${T.borderLight}`,
-                    transition: "all 0.2s"
-                  }}>
-                    {plan.cta}
-                  </button>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA STRIP ── */}
-      <section style={{ padding: "100px 48px", borderTop: `1px solid ${T.border}` }}>
-        <FadeIn>
-          <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 48, fontWeight: 900, color: T.cream, lineHeight: 1.1, marginBottom: 16 }}>
-              Ready to never miss<br /><span style={{ fontStyle: "italic", color: T.gold }}>another call?</span>
+      {/* HOW IT WORKS */}
+      <section id="how" style={{ padding: "90px 24px", background: C.offWhite }}>
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <div style={{ color: C.blue, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>HOW IT WORKS</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 900, color: C.navy }}>
+              Up and running in <span style={{ fontStyle: "italic", color: C.blue }}>under 10 minutes</span>
             </h2>
-            <p style={{ color: T.muted, fontSize: 16, marginBottom: 40 }}>Join businesses across the US that trust CallByDani to handle their customer calls professionally.</p>
-
-            {!submitted ? (
-              <div style={{ display: "flex", gap: 10, maxWidth: 460, margin: "0 auto" }}>
-                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com"
-                  style={{ flex: 1, background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, color: T.cream, padding: "14px 18px", fontSize: 14, outline: "none", fontFamily: "inherit" }} />
-                <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, color: T.bg, border: "none", borderRadius: 12, padding: "14px 24px", fontWeight: 900, fontSize: 14, cursor: "pointer", fontFamily: "'Playfair Display', serif", whiteSpace: "nowrap" }}>
-                  Start Free →
-                </button>
-              </div>
-            ) : (
-              <div style={{ background: T.greenDim, border: `1px solid ${T.green}40`, borderRadius: 14, padding: "18px 32px", display: "inline-block" }}>
-                <span style={{ color: T.green, fontWeight: 800, fontSize: 16 }}>✓ We'll be in touch within 24 hours!</span>
-              </div>
-            )}
-            <div style={{ color: T.muted, fontSize: 12, marginTop: 16 }}>No credit card required · 7-day free trial · Cancel anytime</div>
           </div>
-        </FadeIn>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+            {STEPS.map((s, i) => (
+              <div key={i} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 18, padding: "32px 28px", position: "relative", overflow: "hidden" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 900, color: C.navy, opacity: 0.06, position: "absolute", top: -8, right: 16, lineHeight: 1 }}>{s.n}</div>
+                <div style={{ color: C.blue, fontSize: 10, fontWeight: 800, letterSpacing: 1.5, marginBottom: 14 }}>STEP {s.n}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: C.navy, marginBottom: 10 }}>{s.title}</div>
+                <div style={{ color: C.muted, fontSize: 14, lineHeight: 1.7 }}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ borderTop: `1px solid ${T.border}`, padding: "36px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: `linear-gradient(135deg, ${T.green}, ${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>☎</div>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, color: T.cream }}>CallByDani</span>
+      {/* WHO IT'S FOR */}
+      <section id="who" style={{ padding: "90px 24px", background: C.white }}>
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <div style={{ color: C.blue, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>WHO IT'S FOR</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 900, color: C.navy }}>
+              Built for businesses that<br /><span style={{ fontStyle: "italic", color: C.blue }}>can't afford to miss a call</span>
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+            {SECTORS.map((s, i) => (
+              <div key={i} style={{ background: C.offWhite, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 22px", transition: "all 0.2s", cursor: "default" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.blue; e.currentTarget.style.transform = "translateY(-3px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+              >
+                <div style={{ fontSize: 32, marginBottom: 12 }}>{s.icon}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: C.navy, marginBottom: 6 }}>{s.name}</div>
+                <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ color: T.muted, fontSize: 12 }}>© 2026 CallByDani · All rights reserved</div>
-        <div style={{ display: "flex", gap: 24 }}>
-          {["Privacy", "Terms", "Contact"].map(l => (
-            <a key={l} href="#" style={{ color: T.muted, fontSize: 12, textDecoration: "none" }}>{l}</a>
-          ))}
+      </section>
+
+      {/* FEATURES */}
+      <section id="features" style={{ padding: "90px 24px", background: C.navyDark }}>
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <div style={{ color: C.sky, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>FEATURES</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 900, color: C.white }}>
+              Everything your agents need<br /><span style={{ fontStyle: "italic", color: C.sky }}>to never drop the ball</span>
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+            {[
+              { icon: "🤖", title: "AI Copilot", desc: "Agents get real-time suggestions based on your company policies during every call." },
+              { icon: "📋", title: "Instant summaries", desc: "Every call ends with an AI-generated summary sent to your WhatsApp or email." },
+              { icon: "🌎", title: "Bilingual EN/ES", desc: "Agents switch languages seamlessly. Your customers always feel at home." },
+              { icon: "⚡", title: "Ready in minutes", desc: "Upload your docs and your agents are trained instantly. No onboarding delays." },
+              { icon: "📊", title: "Live dashboard", desc: "See every call, every summary, and every agent in real time from your portal." },
+              { icon: "🔒", title: "Secure & compliant", desc: "Your data and your customers' data stay safe and private at all times." },
+            ].map((f, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "24px 22px" }}>
+                <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: C.white, marginBottom: 8 }}>{f.title}</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, lineHeight: 1.7 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ padding: "90px 24px", background: C.offWhite }}>
+        <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 900, color: C.navy, lineHeight: 1.1, marginBottom: 14 }}>
+            Ready to never miss<br /><span style={{ fontStyle: "italic", color: C.blue }}>another call?</span>
+          </h2>
+          <p style={{ color: C.muted, fontSize: 15, marginBottom: 36 }}>Join businesses across the US that trust CallByDani to handle their customer calls professionally.</p>
+          {!submitted ? (
+            <div style={{ display: "flex", gap: 10, maxWidth: 440, margin: "0 auto", flexWrap: "wrap" }}>
+              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com"
+                style={{ flex: 1, minWidth: 200, background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: "13px 16px", fontSize: 14, outline: "none", fontFamily: "inherit" }} />
+              <button onClick={handleSubmit} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 10, padding: "13px 22px", fontWeight: 900, fontSize: 14, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Start Free →</button>
+            </div>
+          ) : (
+            <div style={{ background: C.greenDim, border: `1px solid ${C.green}40`, borderRadius: 12, padding: "16px 28px", display: "inline-block" }}>
+              <span style={{ color: C.green, fontWeight: 800 }}>✓ We'll be in touch within 24 hours!</span>
+            </div>
+          )}
+          <div style={{ color: C.light, fontSize: 12, marginTop: 14 }}>No credit card required · 7-day free trial · Cancel anytime</div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ background: C.navyDark, padding: "32px 24px" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: C.blue, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>☎</div>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, color: C.white }}>CallByDani.com</span>
+          </div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>© 2026 CallByDani · All rights reserved</div>
+          <div style={{ display: "flex", gap: 20 }}>
+            {["Privacy", "Terms", "Contact"].map(l => (
+              <a key={l} href={l === "Contact" ? "/contact" : "#"} style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, textDecoration: "none" }}>{l}</a>
+            ))}
+          </div>
         </div>
       </footer>
     </div>
