@@ -78,6 +78,12 @@ export default function LandingPage() {
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
+        .desktop-nav { display: flex; }
+.hamburger { display: none; }
+@media (max-width: 768px) {
+  .desktop-nav { display: none !important; }
+  .hamburger { display: flex !important; }
+}
         @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
 
@@ -95,18 +101,18 @@ export default function LandingPage() {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>☎</div>
           <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: C.navy }}>CallByDani</span>
         </a>
-        <div style={{ display: isMobile ? "none" : "flex"} }>
-          {navLinks.map(l => (
+        <div className="desktop-nav" style={{ display: "flex", alignItems: "center", gap: 24} }>
+          {navLinks.map (l => (
             <a key={l.label} href={l.href} style={{ color: C.muted, fontSize: 14, fontWeight: 500, textDecoration: "none" }}
               onMouseEnter={e => e.target.style.color = C.navy}
               onMouseLeave={e => e.target.style.color = C.muted}>{l.label}</a>
           ))}
         </div>
-        <div style={{ display: isMobile ? "none" : "flex", gap: 8, alignItems: "center" }}>
+        <div className="desktop-nav" style={{display: "flex", gap: 8, alignItems: "center"}}>
           <button onClick={() => window.location.href = "/agente"} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontWeight: 600, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Agent Login</button>
           <button onClick={() => window.location.href = "/login"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
           <button onClick={() => window.location.href = "/pricing"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Get Started</button>
-          <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 5, marginLeft: 4 }}>
+          <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 5, marginLeft: 4 }}>
             <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
             <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
             <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
