@@ -90,7 +90,7 @@ export default function LandingPage() {
       {/* NAVBAR */}
       <nav style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-        background: scrolled ? "rgba(255,255,255,0.95)" : "transparent",
+        background: scrolled ? "rgba(255,255,255,0.95)" : "rgba(15,30,48,0.8)",
         borderBottom: scrolled ? `1px solid ${C.border}` : "none",
         backdropFilter: scrolled ? "blur(12px)" : "none",
         transition: "all 0.3s ease",
@@ -98,8 +98,8 @@ export default function LandingPage() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>☎</div>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: C.navy }}>CallByDani</span>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.blue, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18}}>☎</div>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: C.white }}>CallByDani</span>
         </a>
         <div className="desktop-nav" style={{ alignItems: "center", gap: 24 }}>
           {navLinks.map (l => (
@@ -114,9 +114,9 @@ export default function LandingPage() {
           <button onClick={() => window.location.href = "/pricing"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Get Started</button>
           </div>
           <button className="mobile-only" onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, flexDirection: "column", gap: 5 }}>
-            <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
-            <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
-            <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+            <span style={{ display: "block", width: 22, height: 2, background: C.white, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+            <span style={{ display: "block", width: 22, height: 2, background: C.white, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
+            <span style={{ display: "block", width: 22, height: 2, background: C.white, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
           </button>
       </nav>
 
