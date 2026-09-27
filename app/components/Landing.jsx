@@ -112,12 +112,12 @@ export default function LandingPage() {
           <button onClick={() => window.location.href = "/agente"} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontWeight: 600, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Agent Login</button>
           <button onClick={() => window.location.href = "/login"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
           <button onClick={() => window.location.href = "/pricing"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Get Started</button>
+          </div>
           <button className="mobile-only" onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, flexDirection: "column", gap: 5 }}>
             <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
             <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
             <span style={{ display: "block", width: 22, height: 2, background: C.navy, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
           </button>
-        </div>
       </nav>
 
       {/* DROPDOWN */}
