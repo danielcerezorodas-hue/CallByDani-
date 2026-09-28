@@ -31,12 +31,60 @@ const STATS = [
 ];
 
 const SECTORS = [
-  { icon: "🔧", name: "Plumbers & HVAC", desc: "Never miss an emergency call" },
-  { icon: "⚖️", name: "Law Firms", desc: "Screen leads, schedule consults" },
-  { icon: "🏠", name: "Real Estate", desc: "Confirm showings on the go" },
-  { icon: "🏥", name: "Medical Clinics", desc: "Reschedule patients after hours" },
-  { icon: "💼", name: "Executives", desc: "VIP gatekeeper for your time" },
-  { icon: "🍽️", name: "Restaurants", desc: "Reservations & orders handled" },
+  {
+    icon: "🚗", name: "Auto Dealers", desc: "Turn every call into a showroom visit",
+    points: [
+      "Book test drives and service appointments",
+      "Answer inventory and financing questions in EN/ES",
+      "Capture and qualify leads for your sales team",
+      "Never lose a buyer after hours",
+    ],
+  },
+  {
+    icon: "⚖️", name: "Law Firms", desc: "Screen leads, schedule consults",
+    points: [
+      "Screen new cases with your intake questions",
+      "Schedule consultations on your calendar",
+      "Spanish-speaking clients feel heard from the first call",
+      "Urgent matters sent straight to you",
+    ],
+  },
+  {
+    icon: "🏠", name: "Real Estate", desc: "Confirm showings on the go",
+    points: [
+      "Answer listing questions 24/7",
+      "Schedule and confirm showings",
+      "Qualify buyers and sellers",
+      "Capture every lead from your signs and ads",
+    ],
+  },
+  {
+    icon: "🏥", name: "Medical Clinics", desc: "Reschedule patients after hours",
+    points: [
+      "Book, confirm and reschedule appointments",
+      "Answer hours, location and insurance questions",
+      "After-hours coverage so no patient waits",
+      "Bilingual care for Spanish-speaking patients",
+    ],
+  },
+  {
+    icon: "💼", name: "Executives", desc: "VIP gatekeeper for your time",
+    points: [
+      "Screen calls and take detailed messages",
+      "Manage your calendar and meetings",
+      "Dedicated bilingual virtual assistant",
+      "Emails, follow-ups and daily admin handled",
+    ],
+  },
+  {
+    icon: "✨", name: "Other Businesses", desc: "Don't see your industry?",
+    points: [
+      "If your phone rings, we can help",
+      "Our AI learns your business from your documents",
+      "Sales, appointments, leads and virtual assistants",
+    ],
+    cta: true,
+  },
 ];
 
 const STEPS = [
@@ -48,6 +96,7 @@ const STEPS = [
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [flipped, setFlipped] = useState(null);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -204,29 +253,72 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* WHO IT'S FOR */}
-      <section id="who" style={{ padding: "90px 24px", background: C.white }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <div style={{ color: C.blue, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>WHO IT'S FOR</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 900, color: C.navy }}>
-              Built for businesses that<br /><span style={{ fontStyle: "italic", color: C.blue }}>can't afford to miss a call</span>
-            </h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
-            {SECTORS.map((s, i) => (
-              <div key={i} style={{ background: C.offWhite, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 22px", transition: "all 0.2s", cursor: "default" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = C.blue; e.currentTarget.style.transform = "translateY(-3px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
-              >
+     {/* WHO IT'S FOR */}
+<section id="who" style={{ padding: "90px 24px", background: C.white }}>
+  <div style={{ maxWidth: 860, margin: "0 auto" }}>
+    <div style={{ textAlign: "center", marginBottom: 56 }}>
+      <div style={{ color: C.blue, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>WHO IT'S FOR</div>
+      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 900, color: C.navy }}>
+        Built for businesses that<br /><span style={{ fontStyle: "italic", color: C.blue }}>can't afford to miss a call</span>
+      </h2>
+      <p style={{ color: C.muted, fontSize: 14, marginTop: 14 }}>Tap a card to see what we do for you</p>
+    </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+      {SECTORS.map((s, i) => {
+        const isFlipped = flipped === i;
+        return (
+          <div key={i} onClick={() => setFlipped(isFlipped ? null : i)} style={{ perspective: 1000, cursor: "pointer" }}>
+            <div style={{
+              display: "grid", position: "relative",
+              transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d",
+              transition: "transform 0.6s ease",
+              transform: isFlipped ? "rotateY(180deg)" : "none",
+            }}>
+              {/* FRENTE */}
+              <div style={{
+                gridArea: "1 / 1", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                background: C.offWhite, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 22px",
+                display: "flex", flexDirection: "column",
+              }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>{s.icon}</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: C.navy, marginBottom: 6 }}>{s.name}</div>
-                <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>{s.desc}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 17, color: C.navy, marginBottom: 6 }}>{s.name}</div>
+                <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, flex: 1 }}>{s.desc}</div>
+                <div style={{ color: C.blue, fontSize: 12, fontWeight: 700, marginTop: 16 }}>Learn more ↻</div>
               </div>
-            ))}
+
+              {/* REVERSO */}
+              <div style={{
+                gridArea: "1 / 1", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+                background: `linear-gradient(160deg, ${C.navyDark}, ${C.navyLight})`, borderRadius: 16, padding: "22px 22px",
+                display: "flex", flexDirection: "column",
+              }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: C.white, marginBottom: 12 }}>
+                  {s.icon} {s.name}
+                </div>
+                <ul style={{ listStyle: "none", flex: 1 }}>
+                  {s.points.map((p, j) => (
+                    <li key={j} style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, lineHeight: 1.5, marginBottom: 8, display: "flex", gap: 8 }}>
+                      <span style={{ color: C.sky, fontWeight: 900 }}>✓</span>{p}
+                    </li>
+                  ))}
+                </ul>
+                {s.cta && (
+                  <button
+                    onClick={e => { e.stopPropagation(); window.location.href = "/contact"; }}
+                    style={{ background: C.blue, color: C.white, border: "none", borderRadius: 8, padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
+                    Talk to us →
+                  </button>
+                )}
+                <div style={{ color: C.sky, fontSize: 12, fontWeight: 700, marginTop: 12 }}>↻ Back</div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        );
+      })}
+    </div>
+  </div>
+</section>
 
       {/* FEATURES */}
       <section id="features" style={{ padding: "90px 24px", background: C.navyDark }}>
