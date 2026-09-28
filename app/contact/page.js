@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveLead, isValidEmail } from "../leads";
 
 const BUSINESS_TYPES = [
@@ -17,8 +17,6 @@ const BUSINESS_TYPES = [
   "Other"
 ];
 
-const PLANS = ["Starter - $497/mo", "Business - $897/mo", "Executive - $1,497/mo", "Not sure yet"];
-
 export default function ContactPage() {
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", phone: "",
@@ -27,6 +25,14 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Si viene de la página de pricing (/contact?agents=3), guardamos cuántos agentes eligió
+  useEffect(() => {
+    const agents = Number.parseInt(new URLSearchParams(window.location.search).get("agents"), 10);
+    if (agents >= 1 && agents <= 20) {
+      setForm(p => ({ ...p, plan: `${agents} agent${agents === 1 ? "" : "s"}` }));
+    }
+  }, []);
 
   function update(key, value) {
     setForm(p => ({ ...p, [key]: value }));
@@ -146,6 +152,12 @@ export default function ContactPage() {
               placeholder="Tell us anything else about your business needs..."
               style={{ width: "100%", background: "#0f1e30", border: "1px solid #2c4868", borderRadius: 10, color: "#ffffff", padding: "12px 14px", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box", minHeight: 80, resize: "vertical", lineHeight: 1.6 }} />
           </div>
+
+          {form.plan && (
+            <div style={{ background: "#0ea5e915", border: "1px solid #0ea5e940", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ffffff", fontSize: 13 }}>
+              Selected: <strong>{form.plan}</strong> · <a href="/pricing" style={{ color: "#38bdf8" }}>change</a>
+            </div>
+          )}
 
           {error && <div style={{ color: "#c05050", fontSize: 13, marginBottom: 16 }}>⚠ {error}</div>}
 
