@@ -163,6 +163,25 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* DEMO VIDEO */}
+<section id="demo" style={{ padding: "90px 24px", background: C.navyDark }}>
+  <div style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
+    <div style={{ color: C.sky, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>SEE IT IN ACTION</div>
+    <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 900, color: C.white, marginBottom: 40 }}>
+      Meet <span style={{ fontStyle: "italic", color: C.sky }}>CallByDani</span>
+    </h2>
+    <div style={{ borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: `0 0 60px ${C.blue}30` }}>
+      <video
+        src="/demo-en.mp4"
+        controls
+        playsInline
+        preload="metadata"
+        style={{ width: "100%", display: "block", background: "#000" }}
+      />
+    </div>
+  </div>
+</section>
+
       {/* HOW IT WORKS */}
       <section id="how" style={{ padding: "90px 24px", background: C.offWhite }}>
         <div style={{ maxWidth: 860, margin: "0 auto" }}>
