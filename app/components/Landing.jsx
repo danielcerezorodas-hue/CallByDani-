@@ -55,7 +55,6 @@ export default function LandingPage() {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-     window.removeEventListener("resize", onResize);
   }, []);
 
   async function handleSubmit() {
@@ -99,7 +98,7 @@ export default function LandingPage() {
       }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: C.blue, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18}}>☎</div>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: C.white }}>CallByDani</span>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 20, color: scrolled ? C.navy : C.white, transition: "color 0.3s ease" }}>CallByDani</span>
         </a>
         <div className="desktop-nav" style={{ alignItems: "center", gap: 24 }}>
           {navLinks.map (l => (
@@ -114,9 +113,9 @@ export default function LandingPage() {
           <button onClick={() => window.location.href = "/pricing"} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Get Started</button>
           </div>
           <button className="mobile-only" onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, flexDirection: "column", gap: 5 }}>
-            <span style={{ display: "block", width: 22, height: 2, background: C.white, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
-            <span style={{ display: "block", width: 22, height: 2, background: C.white, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
-            <span style={{ display: "block", width: 22, height: 2, background: C.white, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+            <span style={{ display: "block", width: 22, height: 2, background: scrolled ? C.navy : C.white, transition: "all 0.3s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+            <span style={{ display: "block", width: 22, height: 2, background: scrolled ? C.navy : C.white, transition: "all 0.3s", opacity: menuOpen ? 0 : 1 }} />
+            <span style={{ display: "block", width: 22, height: 2, background: scrolled ? C.navy : C.white, transition: "all 0.3s", transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
           </button>
       </nav>
 
