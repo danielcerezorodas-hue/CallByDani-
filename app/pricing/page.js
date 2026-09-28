@@ -84,13 +84,13 @@ export default function PricingPage() {
   }
 
   return (
-    <div style={{ background: "#0a1409", minHeight: "100vh", fontFamily: "sans-serif", padding: "60px 24px" }}>
+    <div style={{ background: "#0f1e30", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif", padding: "60px 24px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontSize: 32, fontWeight: 900, color: "#f2ead8", marginBottom: 12 }}>
+          <div style={{ fontSize: 32, fontWeight: 900, color: "#ffffff", marginBottom: 12 }}>
             Simple, honest pricing
           </div>
-          <p style={{ color: "#5a7a5d", fontSize: 16, marginBottom: 28 }}>
+          <p style={{ color: "#94a3b8", fontSize: 16, marginBottom: 28 }}>
             7-day free trial. No credit card required to start.
           </p>
           <input
@@ -100,15 +100,15 @@ export default function PricingPage() {
             onKeyDown={e => e.key === "Enter" && handleNotify()}
             placeholder="Enter your email to get started"
             style={{
-              width: "100%", maxWidth: 360, background: "#162318",
-              border: "1px solid #1e3320", borderRadius: 10,
-              color: "#f2ead8", padding: "12px 16px", fontSize: 14,
+              width: "100%", maxWidth: 360, background: "#1a2e4a",
+              border: "1px solid #2c4868", borderRadius: 10,
+              color: "#ffffff", padding: "12px 16px", fontSize: 14,
               outline: "none", fontFamily: "inherit", boxSizing: "border-box"
             }}
           />
           <button onClick={handleNotify} disabled={saving} style={{
-            marginTop: 10, background: "transparent", color: "#c8a84b",
-            border: "1px solid #c8a84b40", borderRadius: 10, padding: "9px 20px",
+            marginTop: 10, background: "transparent", color: "#0ea5e9",
+            border: "1px solid #0ea5e940", borderRadius: 10, padding: "9px 20px",
             fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer",
             fontFamily: "inherit", width: "100%", maxWidth: 360
           }}>
@@ -120,7 +120,7 @@ export default function PricingPage() {
             </div>
           )}
           {emailSaved && (
-            <div style={{ color: "#3d9e5f", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
+            <div style={{ color: "#38bdf8", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
               ✓ Got it! Select a plan below to get started.
             </div>
           )}
@@ -129,29 +129,29 @@ export default function PricingPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
           {PLANS.map(plan => (
             <div key={plan.id} style={{
-              background: plan.popular ? "#1f3a22" : "#162318",
-              border: `2px solid ${plan.popular ? "#3d6b41" : "#1e3320"}`,
+              background: plan.popular ? "#243d5c" : "#1a2e4a",
+              border: `2px solid ${plan.popular ? "#0ea5e9" : "#2c4868"}`,
               borderRadius: 20, padding: "32px 24px", position: "relative",
               transform: plan.popular ? "scale(1.03)" : "none"
             }}>
               {plan.popular && (
-                <div style={{ position: "absolute", top: 16, right: 16, background: "#c8a84b", color: "#0a1409", borderRadius: 20, padding: "3px 12px", fontSize: 11, fontWeight: 900 }}>
+                <div style={{ position: "absolute", top: 16, right: 16, background: "#0ea5e9", color: "#ffffff", borderRadius: 20, padding: "3px 12px", fontSize: 11, fontWeight: 900 }}>
                   POPULAR
                 </div>
               )}
-              <div style={{ color: "#5a7a5d", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 8 }}>
+              <div style={{ color: "#94a3b8", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 8 }}>
                 {plan.name.toUpperCase()}
               </div>
-              <div style={{ fontSize: 42, fontWeight: 900, color: "#f2ead8", marginBottom: 4 }}>
+              <div style={{ fontSize: 42, fontWeight: 900, color: "#ffffff", marginBottom: 4 }}>
                 {plan.price}
               </div>
-              <div style={{ color: "#5a7a5d", fontSize: 12, marginBottom: 16 }}>/month</div>
-              <div style={{ color: "#8aaa8d", fontSize: 13, marginBottom: 24 }}>{plan.desc}</div>
+              <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 16 }}>/month</div>
+              <div style={{ color: "#cbd5e1", fontSize: 13, marginBottom: 24 }}>{plan.desc}</div>
               <div style={{ marginBottom: 28 }}>
                 {plan.features.map((f, i) => (
                   <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                    <span style={{ color: "#3d9e5f" }}>✓</span>
-                    <span style={{ color: "#8aaa8d", fontSize: 13 }}>{f}</span>
+                    <span style={{ color: "#38bdf8" }}>✓</span>
+                    <span style={{ color: "#cbd5e1", fontSize: 13 }}>{f}</span>
                   </div>
                 ))}
               </div>
@@ -160,9 +160,9 @@ export default function PricingPage() {
                 disabled={loading === plan.id}
                 style={{
                   width: "100%", padding: "13px 0", borderRadius: 12,
-                  background: plan.popular ? "linear-gradient(135deg, #3d9e5f, #c8a84b)" : "transparent",
-                  color: plan.popular ? "#0a1409" : "#f2ead8",
-                  border: plan.popular ? "none" : "1px solid #3d6b41",
+                  background: plan.popular ? "linear-gradient(135deg, #0ea5e9, #38bdf8)" : "transparent",
+                  color: plan.popular ? "#0f1e30" : "#ffffff",
+                  border: plan.popular ? "none" : "1px solid #0ea5e9",
                   fontWeight: 900, fontSize: 14, cursor: "pointer", fontFamily: "inherit"
                 }}
               >
