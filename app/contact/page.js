@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../supabase";
+import { saveLead, isValidEmail } from "../leads";
 
 const BUSINESS_TYPES = [
+  "Auto Dealer",
   "Plumbing / HVAC",
   "Law Firm",
   "Real Estate",
@@ -36,18 +37,24 @@ export default function ContactPage() {
       setError("Please fill in the required fields.");
       return;
     }
+    if (!isValidEmail(form.email)) {
+      setError("Please enter a valid email.");
+      return;
+    }
     setLoading(true);
     setError("");
-    const { error } = await supabase.from('clients').upsert([{
-      email: form.email,
-      first_name: form.firstName,
-      last_name: form.lastName,
-      phone: form.phone,
-      company: form.company,
+    const error = await saveLead({
+      email: form.email.trim().toLowerCase(),
+      first_name: form.firstName.trim(),
+      last_name: form.lastName.trim(),
+      phone: form.phone.trim(),
+      company: form.company.trim(),
       sector: form.businessType,
+      monthly_calls: form.calls.trim(),
       plan: form.plan,
-      status: 'contact'
-    }]);
+      message: form.message.trim(),
+      source: "contact",
+    });
     if (error) {
       setError("Something went wrong. Please try again.");
     } else {
@@ -88,7 +95,7 @@ export default function ContactPage() {
 
         <div style={{ background: "#162318", border: "1px solid #1e3320", borderRadius: 20, padding: "40px 36px" }}>
           {/* Name */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 18 }}>
             {[["First Name *", "firstName", "John"], ["Last Name", "lastName", "Smith"]].map(([label, key, ph]) => (
               <div key={key}>
                 <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
@@ -99,7 +106,7 @@ export default function ContactPage() {
           </div>
 
           {/* Email & Phone */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 18 }}>
             {[["Email *", "email", "john@company.com", "email"], ["Phone", "phone", "+1 (832) 000-0000", "tel"]].map(([label, key, ph, type]) => (
               <div key={key}>
                 <div style={{ color: "#8aaa8d", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
@@ -157,4 +164,4 @@ export default function ContactPage() {
       </div>
     </div>
   );
-}
+}

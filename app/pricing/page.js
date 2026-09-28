@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../supabase";
+import { saveLead, isValidEmail } from "../leads";
 
 const PLANS = [
   {
@@ -31,33 +31,54 @@ const PLANS = [
 export default function PricingPage() {
   const [loading, setLoading] = useState(null);
   const [emailSaved, setEmailSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
 
-async function handleCheckout(planId) {
-    if (!email) {
-      alert("Please enter your email first");
+  // Botón "Notify me": solo guarda el correo en Supabase
+  async function handleNotify() {
+    if (!isValidEmail(email)) {
+      setEmailError("Please enter a valid email.");
       return;
     }
+    setSaving(true);
+    setEmailError("");
+    const error = await saveLead({ email: email.trim().toLowerCase(), source: "pricing" });
+    setSaving(false);
+    if (error) {
+      setEmailError("Something went wrong. Please try again.");
+    } else {
+      setEmailSaved(true);
+    }
+  }
 
-    // Save email to Supabase
-    await supabase.from('clients').upsert([{ email: email, plan: planId, status: 'lead' }]);
-    setEmailSaved(true);
-
+  // Botones "Get Started" de cada plan: guarda el correo y manda a Stripe
+  async function handleCheckout(planId) {
+    if (!isValidEmail(email)) {
+      setEmailError("Enter your email above first, then choose a plan.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    setEmailError("");
     setLoading(planId);
+
+    // Guardamos el prospecto, pero si falla no bloqueamos el pago
+    await saveLead({ email: email.trim().toLowerCase(), plan: planId, source: "pricing-checkout" });
+
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId, email }),
+        body: JSON.stringify({ plan: planId, email: email.trim() }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
-      } else {
-        alert("Error: " + data.error);
+        return;
       }
+      setEmailError("Checkout error: " + (data.error || "unknown"));
     } catch (err) {
-      alert("Something went wrong");
+      setEmailError("Something went wrong. Please try again.");
     }
     setLoading(null);
   }
@@ -76,6 +97,7 @@ async function handleCheckout(planId) {
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleNotify()}
             placeholder="Enter your email to get started"
             style={{
               width: "100%", maxWidth: 360, background: "#162318",
@@ -84,26 +106,27 @@ async function handleCheckout(planId) {
               outline: "none", fontFamily: "inherit", boxSizing: "border-box"
             }}
           />
-          <button onClick={async () => {
-          console.log("button clicked", email);  
-  if (!email) return;
-  await supabase.from('clients').upsert([{ email: email, status: 'lead' }]);
-  setEmailSaved(true);
-}} style={{
-  marginTop: 10, background: "transparent", color: "#c8a84b",
-  border: "1px solid #c8a84b40", borderRadius: 10, padding: "9px 20px",
-  fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", width: "100%", maxWidth: 360
-}}>
-  Notify me → 
-</button>
-{emailSaved && (
-  <div style={{ color: "#3d9e5f", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
-    ✓ Got it! Select a plan below to get started.
-  </div>
-)}
+          <button onClick={handleNotify} disabled={saving} style={{
+            marginTop: 10, background: "transparent", color: "#c8a84b",
+            border: "1px solid #c8a84b40", borderRadius: 10, padding: "9px 20px",
+            fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer",
+            fontFamily: "inherit", width: "100%", maxWidth: 360
+          }}>
+            {saving ? "Saving..." : "Notify me →"}
+          </button>
+          {emailError && (
+            <div style={{ color: "#e07070", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
+              ⚠ {emailError}
+            </div>
+          )}
+          {emailSaved && (
+            <div style={{ color: "#3d9e5f", fontSize: 13, marginTop: 8, fontWeight: 700 }}>
+              ✓ Got it! Select a plan below to get started.
+            </div>
+          )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
           {PLANS.map(plan => (
             <div key={plan.id} style={{
               background: plan.popular ? "#1f3a22" : "#162318",

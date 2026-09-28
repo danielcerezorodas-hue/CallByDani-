@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../supabase";
+import { saveLead, isValidEmail } from "../leads";
 
 const C = {
   navy: "#1a2e4a",
@@ -99,6 +99,8 @@ export default function LandingPage() {
   const [flipped, setFlipped] = useState(null);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -107,9 +109,19 @@ export default function LandingPage() {
   }, []);
 
   async function handleSubmit() {
-    if (!email) return;
-    await supabase.from("clients").upsert([{ email, status: "lead" }]);
-    setSubmitted(true);
+    if (!isValidEmail(email)) {
+      setFormError("Please enter a valid email.");
+      return;
+    }
+    setSending(true);
+    setFormError("");
+    const error = await saveLead({ email: email.trim().toLowerCase(), source: "landing" });
+    setSending(false);
+    if (error) {
+      setFormError("Something went wrong. Please try again.");
+    } else {
+      setSubmitted(true);
+    }
   }
 
   const navLinks = [
@@ -357,9 +369,10 @@ export default function LandingPage() {
           <p style={{ color: C.muted, fontSize: 15, marginBottom: 36 }}>Join businesses across the US that trust CallByDani to handle their customer calls professionally.</p>
           {!submitted ? (
             <div style={{ display: "flex", gap: 10, maxWidth: 440, margin: "0 auto", flexWrap: "wrap" }}>
-              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com"
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com"
                 style={{ flex: 1, minWidth: 200, background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: "13px 16px", fontSize: 14, outline: "none", fontFamily: "inherit" }} />
-              <button onClick={handleSubmit} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 10, padding: "13px 22px", fontWeight: 900, fontSize: 14, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Start Free →</button>
+              <button onClick={handleSubmit} disabled={sending} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 10, padding: "13px 22px", fontWeight: 900, fontSize: 14, cursor: sending ? "not-allowed" : "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{sending ? "Sending..." : "Start Free →"}</button>
+              {formError && <div style={{ width: "100%", color: "#dc2626", fontSize: 13, textAlign: "left" }}>⚠ {formError}</div>}
             </div>
           ) : (
             <div style={{ background: C.greenDim, border: `1px solid ${C.green}40`, borderRadius: 12, padding: "16px 28px", display: "inline-block" }}>
@@ -387,4 +400,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-}
+}
