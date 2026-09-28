@@ -79,7 +79,7 @@ const FAQ = [
 
 export default function PricingPage() {
   const [agents, setAgents] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(null); // qué botón está cargando
   const [checkoutError, setCheckoutError] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
 
@@ -103,14 +103,16 @@ export default function PricingPage() {
   }
 
   // "Subscribe now": manda a Stripe con la cantidad de agentes
-  async function subscribeNow() {
-    setLoading(true);
+  // Manda a Stripe con la cantidad de agentes elegida.
+  // "key" identifica qué botón se presionó (para mostrar "Loading...").
+  async function subscribeNow(quantity = agents, key = "calc") {
+    setLoading(key);
     setCheckoutError("");
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agents }),
+        body: JSON.stringify({ agents: quantity }),
       });
       const data = await res.json();
       if (data.url) {
@@ -121,7 +123,7 @@ export default function PricingPage() {
     } catch (err) {
       setCheckoutError("Something went wrong. Please try again.");
     }
-    setLoading(false);
+    setLoading(null);
   }
 
   async function handleNotify() {
@@ -183,6 +185,7 @@ export default function PricingPage() {
             return (
               <div key={i} onClick={() => setAgents(t.min)} style={{
                 background: C.white, borderRadius: 20, padding: "30px 26px", cursor: "pointer", position: "relative",
+                display: "flex", flexDirection: "column",
                 border: `2px solid ${active ? C.blue : C.border}`,
                 boxShadow: active ? `0 12px 40px ${C.blue}30` : "0 8px 30px rgba(15,30,48,0.08)",
                 transition: "all 0.2s",
@@ -196,7 +199,25 @@ export default function PricingPage() {
                 <div style={{ display: "inline-block", background: `${C.blue}12`, color: C.navy, borderRadius: 8, padding: "5px 10px", fontSize: 13, fontWeight: 700, marginBottom: 14 }}>
                   Only {hourly(t.price)} per hour
                 </div>
-                <div style={{ color: C.blue, fontSize: 13, fontWeight: 700 }}>{t.note}</div>
+                <div style={{ color: C.blue, fontSize: 13, fontWeight: 700, flex: 1, marginBottom: 20 }}>{t.note}</div>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    // Si el cliente ya eligió una cantidad dentro de este nivel, la usamos; si no, el mínimo del nivel
+                    const qty = active ? agents : t.min;
+                    setAgents(qty);
+                    subscribeNow(qty, `tier-${i}`);
+                  }}
+                  disabled={loading !== null}
+                  style={{
+                    width: "100%", padding: "13px 0", borderRadius: 12, fontWeight: 800, fontSize: 14, fontFamily: "inherit",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    background: t.popular ? C.blue : C.white,
+                    color: t.popular ? C.white : C.navy,
+                    border: t.popular ? "none" : `1.5px solid ${C.navy}`,
+                  }}>
+                  {loading === `tier-${i}` ? "Loading..." : `Subscribe — ${active ? agents : t.min} ${(active ? agents : t.min) === 1 ? "agent" : "agents"} →`}
+                </button>
               </div>
             );
           })}
@@ -249,11 +270,11 @@ export default function PricingPage() {
             Start My Free Week →
           </button>
           <div style={{ marginTop: 14 }}>
-            <button onClick={subscribeNow} disabled={loading} style={{
+            <button onClick={() => subscribeNow(agents, "calc")} disabled={loading !== null} style={{
               background: "none", border: "none", color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 600,
               textDecoration: "underline", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit",
             }}>
-              {loading ? "Loading..." : "Ready to go? Subscribe now"}
+              {loading === "calc" ? "Loading..." : "Ready to go? Subscribe now"}
             </button>
           </div>
           {checkoutError && <div style={{ color: "#f87171", fontSize: 13, marginTop: 10 }}>⚠ {checkoutError}</div>}

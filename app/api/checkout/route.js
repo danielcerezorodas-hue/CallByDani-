@@ -2,9 +2,9 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Precio "Agente" en Stripe (con precios por volumen: 1 = $1,697, 2-3 = $1,550, 4+ = $1,490).
+// Precio "Agente" en Stripe (con precios por volumen: 1 = $1,997, 2-3 = $1,697, 4+ = $1,550).
 // Pega aquí el ID del precio que creaste en Stripe (empieza con "price_").
-const AGENT_PRICE_ID = 'PEGA_AQUI_TU_PRICE_ID';
+const AGENT_PRICE_ID = 'price_1UKWTgJxvEA4yBLNsPIARcH0';
 
 const MAX_AGENTS = 20;
 
