@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { agentApi, post } from "./agentApi";
+import { supabase } from "../supabase";
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
 const C = {
@@ -110,6 +111,107 @@ function useLines() {
   }, []);
   useEffect(() => { reload(); }, [reload]);
   return { lines, error, reload };
+}
+
+// ─── LLAMADAS ENTRANTES (TIEMPO REAL) ────────────────────────────────────────
+// Si quien llama cuelga mientras suena, la fila se queda en "ringing";
+// después de este tiempo ya no la mostramos.
+const RING_WINDOW_MS = 3 * 60 * 1000;
+
+// Escucha la tabla calls con Supabase Realtime y devuelve las que están sonando
+function useRingingCalls() {
+  const [calls, setCalls] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      const { data, error: e } = await supabase
+        .from("calls")
+        .select("call_sid, from_number, to_number, business_name, language, status, created_at")
+        .eq("status", "ringing")
+        .gt("created_at", new Date(Date.now() - RING_WINDOW_MS).toISOString());
+      if (e) setError(e.message);
+      else setCalls(data || []);
+    }
+
+    const channel = supabase
+      .channel("ringing-calls")
+      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, ({ eventType, new: row }) => {
+        if (eventType === "DELETE" || !row?.call_sid) return;
+        setCalls(list => {
+          const rest = list.filter(c => c.call_sid !== row.call_sid);
+          return row.status === "ringing" ? [...rest, row] : rest;
+        });
+      })
+      .subscribe(status => {
+        // Al conectar (o reconectar) cargamos las que ya estaban sonando
+        if (status === "SUBSCRIBED") { setError(""); load(); }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setError("Sin conexión en tiempo real. Reintentando...");
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  return { calls, error };
+}
+
+function IncomingCalls({ ringingHere }) {
+  const { calls, error } = useRingingCalls();
+  const [ignored, setIgnored] = useState([]);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const visible = calls
+    .filter(c => !ignored.includes(c.call_sid) && now - Date.parse(c.created_at) < RING_WINDOW_MS)
+    .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+
+  if (!visible.length && !error) return null;
+
+  function ignore(call) {
+    // Si suena en este teléfono, la rechazamos para que pase a otro agente
+    if (ringingHere?.callSid === call.call_sid) ringingHere.reject();
+    setIgnored(list => [...list, call.call_sid]);
+  }
+
+  return (
+    <Card style={{ marginBottom: 24, overflow: "hidden", borderColor: visible.length ? C.blue : C.border }}>
+      <div style={{ padding: "14px 20px", borderBottom: visible.length ? `1px solid ${C.border}` : "none", display: "flex", alignItems: "center", gap: 10 }}>
+        {visible.length > 0 && <div style={{ width: 10, height: 10, borderRadius: "50%", background: C.blue, animation: "ringPulse 1s infinite" }} />}
+        <div style={{ fontWeight: 800, fontSize: 14, color: C.navy }}>
+          📲 Llamadas entrantes {visible.length > 0 && `(${visible.length})`}
+        </div>
+        {error && <div style={{ color: C.red, fontSize: 12, marginLeft: "auto" }}>⚠ {error}</div>}
+      </div>
+      {visible.map(call => {
+        const here = ringingHere?.callSid === call.call_sid;
+        const ringSeconds = Math.max(0, Math.floor((now - Date.parse(call.created_at)) / 1000));
+        return (
+          <div key={call.call_sid} style={{ padding: "14px 20px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", background: here ? C.blueDim : C.surface }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontWeight: 800, fontSize: 16, color: C.navy, fontFamily: "monospace" }}>{formatPhone(call.from_number) || "Número oculto"}</div>
+              <div style={{ color: C.muted, fontSize: 12, marginTop: 2 }}>
+                {call.business_name} · {!call.language ? "eligiendo idioma" : call.language === "es" ? "Español" : "English"}
+              </div>
+            </div>
+            <div style={{ textAlign: "right", minWidth: 90 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.5 }}>SONANDO</div>
+              <div style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 15, color: ringSeconds >= 30 ? C.red : C.text }}>{formatDuration(ringSeconds)}</div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <Btn variant="success" size="sm" onClick={() => ringingHere.accept()} disabled={!here}
+                title={here ? "" : "Esta llamada no está sonando en tu teléfono"}>Contestar</Btn>
+              <Btn variant="ghost" size="sm" onClick={() => ignore(call)}>Ignorar</Btn>
+            </div>
+          </div>
+        );
+      })}
+      <style>{`@keyframes ringPulse { 0%,100%{opacity:1} 50%{opacity:0.25} }`}</style>
+    </Card>
+  );
 }
 
 // ─── EMPRESAS (ADMIN) ────────────────────────────────────────────────────────
@@ -737,7 +839,7 @@ function CallLogTab({ isAdmin }) {
 }
 
 // ─── MAIN ────────────────────────────────────────────────────────────────────
-export default function AgentPanel({ me, liveCall, onFinishCall, onLogout }) {
+export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, onLogout }) {
   const tabs = [
     { id: "agent", label: "🎧 Llamada", sub: "Asistente y nota" },
     { id: "calls", label: "📋 Registro", sub: "Historial" },
@@ -796,6 +898,7 @@ export default function AgentPanel({ me, liveCall, onFinishCall, onLogout }) {
 
       {/* CONTENT */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
+        <IncomingCalls ringingHere={ringingHere} />
         {tab === "agent" && <AgentTab lines={lines} liveCall={liveCall} onFinishCall={onFinishCall} />}
         {tab === "calls" && <CallLogTab isAdmin={me.isAdmin} />}
         {tab === "companies" && me.isAdmin && <CompaniesTab lines={lines} reloadLines={reloadLines} linesError={linesError} />}

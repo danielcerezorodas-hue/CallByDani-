@@ -16,6 +16,8 @@ export default function AgentePage() {
   const [denied, setDenied] = useState("");
   // Llamada en vivo: { callSid, from, to, business, lang, ended }
   const [liveCall, setLiveCall] = useState(null);
+  // Llamada que está sonando en el teléfono de este agente: { callSid, accept, reject }
+  const [ringingHere, setRingingHere] = useState(null);
 
   // Recupera la sesión al recargar la página
   useEffect(() => {
@@ -80,10 +82,12 @@ export default function AgentePage() {
       <AgentPanel
         me={me}
         liveCall={liveCall}
+        ringingHere={ringingHere}
         onFinishCall={finishCall}
         onLogout={handleLogout}
       />
       <PhoneWidget
+        onIncoming={setRingingHere}
         onCallStart={info => setLiveCall({ ...info, ended: false })}
         onCallEnd={() => setLiveCall(c => (c ? { ...c, ended: true } : c))}
         wrapUp={!!liveCall?.ended}

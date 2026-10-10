@@ -31,7 +31,9 @@ function param(call, name) {
 // onCallStart({ callSid, from, to, business, lang }) se llama al contestar.
 // onCallEnd() se llama al colgar. Mientras wrapUp sea true (el agente llena la nota)
 // no se aceptan llamadas nuevas.
-export default function PhoneWidget({ onCallStart, onCallEnd, wrapUp = false }) {
+// onIncoming({ callSid, accept, reject }) avisa qué llamada suena en este teléfono (o null),
+// para que el panel también pueda contestarla.
+export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp = false }) {
   const [status, setStatus] = useState("offline"); // offline | connecting | online
   const [error, setError] = useState("");
   const [incoming, setIncoming] = useState(null);
@@ -44,6 +46,10 @@ export default function PhoneWidget({ onCallStart, onCallEnd, wrapUp = false }) 
   const timerRef = useRef(null);
   const wrapUpRef = useRef(wrapUp);
   useEffect(() => { wrapUpRef.current = wrapUp; }, [wrapUp]);
+
+  useEffect(() => {
+    onIncoming?.(incoming ? { callSid: param(incoming, "parentCallSid"), accept, reject } : null);
+  }, [incoming]);
 
   // Al salir del panel (o cerrar sesión) se desconecta el teléfono
   useEffect(() => () => {
