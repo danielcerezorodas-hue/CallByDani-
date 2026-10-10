@@ -111,12 +111,7 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
       const { Device } = await import("@twilio/voice-sdk");
       const { token, canCallOut } = await api("/api/twilio/token");
       setCanCallOut(!!canCallOut);
-      if (canCallOut) {
-        agentApi("/api/agent/lines").then(({ lines }) => {
-          setLines(lines);
-          setDialLine(l => l || lines[0]?.phone_number || "");
-        }).catch(() => {});
-      }
+      if (canCallOut) loadLines();
       const device = new Device(token, { codecPreferences: ["opus", "pcmu"], closeProtection: true });
 
       device.on("error", err => setError(err?.message || "Phone error"));
@@ -196,12 +191,22 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
     else api("/api/twilio/agent-status", { inCall: false, online: true }).catch(() => {});
   }
 
+  // Empresas desde las que se puede llamar (su número sale como identificador)
+  function loadLines() {
+    return agentApi("/api/agent/lines").then(({ lines }) => {
+      setLines(lines);
+      setDialLine(l => (lines.some(x => x.phone_number === l) ? l : lines[0]?.phone_number || ""));
+    }).catch(e => setError(`No se pudieron cargar las empresas: ${e.message}`));
+  }
+
   // Llamada saliente desde el marcador
   async function callOut() {
     const to = toE164(dialTo);
     if (!to) { setError("Escribe un número de 10 dígitos (EE. UU./Canadá)"); return; }
-    if (!dialLine) { setError("Elige desde qué empresa llamar"); return; }
-    if (!deviceRef.current || activeRef.current || incoming || wrapUp) return;
+    if (!dialLine) { setError("Primero agrega una empresa en la pestaña Empresas"); return; }
+    if (!deviceRef.current) { setError("El teléfono no está conectado. Pulsa Conectar."); return; }
+    if (activeRef.current || incoming) { setError("Ya hay una llamada en curso"); return; }
+    if (wrapUp) { setError("Guarda la nota de la llamada anterior primero"); return; }
     setError("");
     const business = lines.find(l => l.phone_number === dialLine)?.business_name || "";
     try {
@@ -320,17 +325,23 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
           {canCallOut ? (
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.navy}` }}>
               <div style={{ color: C.sky, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 8 }}>LLAMAR</div>
-              <select value={dialLine} onChange={e => setDialLine(e.target.value)} style={{ ...dark, marginBottom: 8 }}>
-                {lines.length === 0 && <option value="">No hay empresas</option>}
-                {lines.map(l => <option key={l.phone_number} value={l.phone_number}>Desde {l.business_name}</option>)}
-              </select>
+              {lines.length === 0 ? (
+                <div style={{ color: "#fbbf24", fontSize: 12, marginBottom: 8, lineHeight: 1.5 }}>
+                  Para llamar, agrega primero una empresa con tu número de Twilio (pestaña Empresas).{" "}
+                  <button onClick={loadLines} style={{ background: "none", border: "none", color: C.sky, padding: 0, fontSize: 12, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>Ya la agregué ↻</button>
+                </div>
+              ) : (
+                <select value={dialLine} onChange={e => setDialLine(e.target.value)} onFocus={loadLines} style={{ ...dark, marginBottom: 8 }}>
+                  {lines.map(l => <option key={l.phone_number} value={l.phone_number}>Desde {l.business_name}</option>)}
+                </select>
+              )}
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <input value={dialTo} onChange={e => setDialTo(e.target.value)} onKeyDown={e => e.key === "Enter" && callOut()}
                   placeholder="(910) 555-1234" inputMode="tel" style={{ ...dark, flex: 1, fontSize: 15, letterSpacing: 0.5 }} />
                 <button onClick={() => setShowPad(s => !s)} style={{ ...dark, width: 42, flex: "0 0 42px", cursor: "pointer" }} title="Teclado">⌨</button>
               </div>
               {showPad && <Keypad onPress={pressKey} />}
-              <button onClick={callOut} disabled={!dialTo.trim() || !dialLine} style={{ ...btn(C.green), width: "100%", opacity: !dialTo.trim() || !dialLine ? 0.5 : 1 }}>
+              <button onClick={callOut} style={{ ...btn(C.green), width: "100%", opacity: !dialTo.trim() || !dialLine ? 0.5 : 1 }}>
                 📞 Llamar
               </button>
             </div>
