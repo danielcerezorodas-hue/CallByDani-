@@ -12,7 +12,7 @@ export async function POST(req) {
     .select("business_name")
     .eq("phone_number", p.To)
     .maybeSingle();
-  const business = line?.business_name || "our office";
+  const business = line?.business_name || "CallByDani";
 
   await supa.from("calls").upsert(
     { call_sid: p.CallSid, from_number: p.From, to_number: p.To, business_name: business, status: "ringing" },
