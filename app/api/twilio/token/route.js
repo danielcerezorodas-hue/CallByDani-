@@ -13,12 +13,15 @@ let keyChecked = false;
 async function checkKey(accountSid, keySid, secret) {
   if (keyChecked) return null;
   try {
-    await twilio(keySid, secret, { accountSid }).api.v2010.accounts(accountSid).fetch();
+    // Las keys Standard no pueden leer la cuenta en sí (error 70004), pero sí sus llamadas
+    await twilio(keySid, secret, { accountSid }).calls.list({ limit: 1 });
     keyChecked = true;
     return null;
   } catch (e) {
     console.error("Twilio API key check:", e.status, e.code, e.message);
-    if (e.status === 401 || e.status === 403 || e.status === 404) {
+    // Solo bloqueamos si Twilio dice que la key/secret/cuenta no autentican;
+    // cualquier otro error (permisos, red) no debe impedir que el agente se conecte.
+    if (e.code === 20003 || e.code === 70051) {
       return "Twilio rechazó la API key: TWILIO_API_KEY_SID y TWILIO_API_KEY_SECRET no coinciden entre sí, " +
         "o la key es de otra cuenta/subcuenta que TWILIO_ACCOUNT_SID, o se creó en una región distinta de US1.";
     }
