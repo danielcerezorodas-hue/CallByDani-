@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "../supabase";
 
-export default function AgentLogin({ onLogin }) {
+export default function AgentLogin({ onLogin, notice }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,8 +13,8 @@ export default function AgentLogin({ onLogin }) {
     if (!email || !password) return;
     setLoading(true);
     setError("");
-    const { data, err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
       setError("Email o contraseña incorrectos");
     } else {
       onLogin(data.user);
@@ -43,6 +43,7 @@ export default function AgentLogin({ onLogin }) {
             placeholder="••••••••"
             style={{ width:"100%", background:"#0f1d0e", border:"1px solid #1e3320", borderRadius:10, color:"#f2ead8", padding:"12px 16px", fontSize:14, outline:"none", fontFamily:"inherit", boxSizing:"border-box" }} />
         </div>
+        {!error && notice && <div style={{ color:"#c8a84b", fontSize:13, marginBottom:16, textAlign:"center" }}>{notice}</div>}
         {error && <div style={{ color:"#c05050", fontSize:13, marginBottom:16, textAlign:"center" }}>⚠ {error}</div>}
         <button onClick={handleLogin} disabled={loading}
           style={{ width:"100%", padding:"13px 0", background:"linear-gradient(135deg, #3d9e5f, #c8a84b)", color:"#0a1409", border:"none", borderRadius:12, fontWeight:900, fontSize:15, cursor:"pointer" }}>
@@ -51,4 +52,4 @@ export default function AgentLogin({ onLogin }) {
       </div>
     </div>
   );
-}
+}
