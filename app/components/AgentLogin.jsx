@@ -68,6 +68,9 @@ export function ChangePassword({ email, onDone, onLogout }) {
     setLoading(true);
     try {
       await post("/api/agent/password", { password });
+      // Supabase cierra todas las sesiones al cambiar la contraseña: entramos de nuevo con la nueva
+      const { error: e2 } = await supabase.auth.signInWithPassword({ email, password });
+      if (e2) throw new Error("Contraseña guardada. Entra de nuevo con tu nueva contraseña.");
       onDone();
     } catch (e) {
       setError(e.message);

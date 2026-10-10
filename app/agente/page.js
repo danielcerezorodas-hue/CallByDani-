@@ -82,7 +82,13 @@ export default function AgentePage() {
     return (
       <ChangePassword
         email={me.email}
-        onDone={() => agentApi("/api/agent/me").then(setMe).catch(e => setDenied(e.message))}
+        onDone={() => agentApi("/api/agent/me").then(setMe).catch(async e => {
+          // Si algo falla, volvemos al login en vez de quedarnos atascados en esta pantalla
+          await supabase.auth.signOut();
+          setUser(null);
+          setMe(null);
+          setDenied(e.message);
+        })}
         onLogout={handleLogout}
       />
     );
