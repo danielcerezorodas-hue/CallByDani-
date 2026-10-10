@@ -57,6 +57,8 @@ export async function POST(req) {
   const { VoiceGrant } = AccessToken;
   const identity = toIdentity(agent.id);
   const token = new AccessToken(accountSid, keySid, secret, { identity, ttl: 3600 });
-  token.addGrant(new VoiceGrant({ incomingAllow: true }));
-  return Response.json({ token: token.toJwt(), identity });
+  // Llamadas salientes: necesitan una TwiML App en Twilio que apunte a /api/twilio/outbound
+  const appSid = clean("TWILIO_TWIML_APP_SID");
+  token.addGrant(new VoiceGrant({ incomingAllow: true, ...(appSid && { outgoingApplicationSid: appSid }) }));
+  return Response.json({ token: token.toJwt(), identity, canCallOut: !!appSid });
 }

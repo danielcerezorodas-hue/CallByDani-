@@ -755,6 +755,9 @@ const STATUS = {
   completed: { label: "Atendida", color: "green" },
   voicemail: { label: "Buzón", color: "yellow" },
   missed: { label: "Perdida", color: "red" },
+  outbound: { label: "↗ Saliente", color: "blue" },
+  outbound_done: { label: "↗ Saliente", color: "green" },
+  outbound_missed: { label: "↗ Sin respuesta", color: "gray" },
 };
 const WHATSAPP = {
   sent: { label: "💬 Enviado", color: "green" },
