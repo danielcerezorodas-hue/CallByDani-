@@ -791,6 +791,7 @@ function CallLogTab({ isAdmin }) {
           <Badge label={`${todays.length} hoy`} color="blue" />
           <Badge label={`${count("completed")} atendidas`} color="green" />
           <Badge label={`${count("voicemail")} buzón`} color="yellow" />
+          <Badge label={`${count("missed")} perdidas`} color="red" />
           <Btn size="sm" variant="secondary" onClick={reload} disabled={loading}>{loading ? "..." : "↻ Actualizar"}</Btn>
         </div>
       </div>
