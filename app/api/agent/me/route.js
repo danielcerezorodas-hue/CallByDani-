@@ -3,7 +3,7 @@ import { requireAgent, db, isAdmin } from "../helpers";
 import { ONLINE_WINDOW_MS } from "../../twilio/helpers";
 
 export async function GET(req) {
-  const { user, error } = await requireAgent(req);
+  const { user, error } = await requireAgent(req, { allowPendingReset: true });
   if (error) return error;
 
   const since = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
@@ -13,5 +13,11 @@ export async function GET(req) {
     .eq("online", true)
     .gte("last_seen", since);
 
-  return Response.json({ id: user.id, email: user.email, isAdmin: isAdmin(user), onlineCount: count || 0 });
+  return Response.json({
+    id: user.id,
+    email: user.email,
+    isAdmin: isAdmin(user),
+    onlineCount: count || 0,
+    mustResetPassword: !!user.app_metadata?.must_reset_password,
+  });
 }

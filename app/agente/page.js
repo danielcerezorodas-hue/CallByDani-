@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from "react";
-import AgentLogin from "../components/AgentLogin";
+import AgentLogin, { ChangePassword } from "../components/AgentLogin";
 import AgentPanel from "../components/AgentPanel";
 import PhoneWidget from "../components/PhoneWidget";
 import { agentApi, post } from "../components/agentApi";
@@ -75,6 +75,17 @@ export default function AgentePage() {
   if (!user || !me) {
     if (checking && user) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif", color: "#6b7280" }}>Cargando...</div>;
     return <AgentLogin onLogin={u => { setDenied(""); setUser(u); }} notice={denied} />;
+  }
+
+  // Cuenta nueva con contraseña temporal: primero tiene que cambiarla
+  if (me.mustResetPassword) {
+    return (
+      <ChangePassword
+        email={me.email}
+        onDone={() => agentApi("/api/agent/me").then(setMe).catch(e => setDenied(e.message))}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (

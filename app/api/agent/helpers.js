@@ -8,9 +8,13 @@ export function fail(message, status = 400) {
 }
 
 // Devuelve { user } si es agente autorizado (y admin si se pide), o { error: Response }
-export async function requireAgent(req, { admin = false } = {}) {
+// Mientras tenga la contraseña temporal solo puede usar /me y /password (allowPendingReset).
+export async function requireAgent(req, { admin = false, allowPendingReset = false } = {}) {
   const { user, error } = await authAgent(req);
   if (error) return { error };
+  if (!allowPendingReset && user.app_metadata?.must_reset_password) {
+    return { error: fail("Primero cambia tu contraseña temporal", 403) };
+  }
   if (admin && !isAdmin(user)) return { error: fail("Solo el admin puede hacer esto", 403) };
   return { user };
 }

@@ -32,6 +32,9 @@ async function checkKey(accountSid, keySid, secret) {
 export async function POST(req) {
   const { user: agent, error } = await authAgent(req);
   if (error) return error;
+  if (agent.app_metadata?.must_reset_password) {
+    return Response.json({ error: "Primero cambia tu contraseña temporal" }, { status: 403 });
+  }
 
   const accountSid = clean("TWILIO_ACCOUNT_SID");
   const keySid = clean("TWILIO_API_KEY_SID");
