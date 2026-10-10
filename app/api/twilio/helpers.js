@@ -33,12 +33,15 @@ export function origin(req) {
 
 // Lee los datos que manda Twilio y confirma que de verdad vienen de Twilio.
 // Devuelve los parámetros, o null si la firma no es válida.
+// Con GET los datos vienen en la URL y la firma se calcula solo con la URL.
 export async function readTwilioRequest(req) {
-  const form = await req.formData();
-  const params = Object.fromEntries(form);
+  const isGet = req.method === "GET";
+  const params = isGet
+    ? Object.fromEntries(new URL(req.url).searchParams)
+    : Object.fromEntries(await req.formData());
   if (process.env.TWILIO_SKIP_SIGNATURE === "true") return params;
   const signature = req.headers.get("x-twilio-signature") || "";
-  const ok = twilio.validateRequest(process.env.TWILIO_AUTH_TOKEN, signature, publicUrl(req), params);
+  const ok = twilio.validateRequest(process.env.TWILIO_AUTH_TOKEN, signature, publicUrl(req), isGet ? {} : params);
   return ok ? params : null;
 }
 

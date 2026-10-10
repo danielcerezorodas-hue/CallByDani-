@@ -32,3 +32,6 @@ export async function POST(req) {
   response.redirect({ method: "POST" }, `${origin(req)}/api/twilio/language?default=en`);
   return twiml(response);
 }
+
+// Por si el número está configurado en Twilio con "HTTP GET"
+export const GET = POST;
