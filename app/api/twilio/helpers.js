@@ -2,11 +2,18 @@
 import twilio from "twilio";
 import { createClient } from "@supabase/supabase-js";
 
+// Lee una variable de entorno; si falta, el error dice cuál es
+function env(name) {
+  const value = (process.env[name] || "").trim();
+  if (!value) throw new Error(`Falta la variable de entorno ${name} en el servidor`);
+  return value;
+}
+
 // Cliente de Supabase con permisos de servidor (nunca usar en el navegador)
 export function db() {
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    env("NEXT_PUBLIC_SUPABASE_URL"),
+    env("SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { persistSession: false } }
   );
 }
@@ -75,6 +82,18 @@ export async function getAgent(req) {
     .eq("email", user.email.toLowerCase())
     .maybeSingle();
   return allowed ? user : null;
+}
+
+// Como getAgent, pero devuelve { user } o { error: Response } con el motivo,
+// en vez de un 500 vacío si algo falla en el servidor.
+export async function authAgent(req) {
+  try {
+    const user = await getAgent(req);
+    return user ? { user } : { error: Response.json({ error: "No autorizado" }, { status: 401 }) };
+  } catch (e) {
+    console.error("authAgent:", e);
+    return { error: Response.json({ error: e.message }, { status: 500 }) };
+  }
 }
 
 // Convierte "(910) 555-1234" o "9105551234" en "+19105551234"

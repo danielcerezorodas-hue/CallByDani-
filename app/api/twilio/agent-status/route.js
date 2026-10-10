@@ -1,9 +1,9 @@
 // El panel del agente avisa si está conectado, desconectado o en llamada.
-import { getAgent, db } from "../helpers";
+import { authAgent, db } from "../helpers";
 
 export async function POST(req) {
-  const agent = await getAgent(req);
-  if (!agent) return Response.json({ error: "Not signed in" }, { status: 401 });
+  const { user: agent, error: authError } = await authAgent(req);
+  if (authError) return authError;
 
   const body = await req.json().catch(() => ({}));
   const row = { agent_id: agent.id, email: agent.email, last_seen: new Date().toISOString() };
