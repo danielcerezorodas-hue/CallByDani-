@@ -88,6 +88,16 @@ const SECTORS = [
   },
 ];
 
+// Contacto que se muestra en la landing
+const CONTACT = {
+  phone: "+18556846989",
+  phoneLabel: "1 (855) 684-6989",
+  emails: [
+    { name: "Daniel Cerezo", email: "daniel.cerezo@callbydani.com" },
+    { name: "Juan Hernandez", email: "juan.hernandezcso@callbydani.com" },
+  ],
+};
+
 const STEPS = [
   { n: "01", title: "Register online", desc: "Create your account and choose your plan in under 3 minutes." },
   { n: "02", title: "Upload your documents", desc: "Policies, FAQs, price lists — AI trains your agents instantly." },
@@ -439,6 +449,22 @@ export default function LandingPage() {
             </div>
           )}
           <div style={{ color: C.light, fontSize: 12, marginTop: 14 }}>No credit card required · 7-day free trial · Cancel anytime</div>
+
+          {/* CONTACTO */}
+          <div style={{ marginTop: 44, paddingTop: 32, borderTop: `1px solid ${C.border}` }}>
+            <div style={{ color: C.muted, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 16 }}>PREFER TO TALK TO A PERSON?</div>
+            <a href={`tel:${CONTACT.phone}`} style={{ display: "inline-flex", alignItems: "center", gap: 10, background: C.navy, color: C.white, borderRadius: 12, padding: "13px 24px", fontWeight: 800, fontSize: 18, textDecoration: "none", marginBottom: 20 }}>
+              📞 {CONTACT.phoneLabel}
+            </a>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, textAlign: "left" }}>
+              {CONTACT.emails.map(c => (
+                <a key={c.email} href={`mailto:${c.email}`} style={{ display: "block", background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", textDecoration: "none" }}>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: C.navy }}>{c.name}</div>
+                  <div style={{ color: C.blue, fontSize: 13, marginTop: 3, wordBreak: "break-all" }}>✉️ {c.email}</div>
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -448,6 +474,12 @@ export default function LandingPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 28, height: 28, borderRadius: 7, background: C.blue, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>☎</div>
             <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, color: C.white }}>CallByDani.com</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
+            <a href={`tel:${CONTACT.phone}`} style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>📞 {CONTACT.phoneLabel}</a>
+            {CONTACT.emails.map(c => (
+              <a key={c.email} href={`mailto:${c.email}`} style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", wordBreak: "break-all" }}>{c.email}</a>
+            ))}
           </div>
           <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>© 2026 CallByDani · All rights reserved</div>
           <div style={{ display: "flex", gap: 20 }}>
