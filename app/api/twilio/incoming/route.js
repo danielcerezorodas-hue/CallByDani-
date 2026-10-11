@@ -26,8 +26,9 @@ export async function POST(req) {
     action: `${origin(req)}/api/twilio/language`,
     method: "POST",
   });
-  gather.say(VOICE.en, `Thank you for calling ${business}. For English, press 1.`);
-  gather.say(VOICE.es, "Para español, oprima 2.");
+  // Aviso de grabación (las llamadas se graban al contestar) en los dos idiomas
+  gather.say(VOICE.en, `Thank you for calling ${business}. This call may be recorded for quality and training purposes. For English, press 1.`);
+  gather.say(VOICE.es, "Esta llamada puede ser grabada para fines de calidad y capacitación. Para español, oprima 2.");
   // Si no marca nada, seguimos en inglés
   response.redirect({ method: "POST" }, `${origin(req)}/api/twilio/language?default=en`);
   return twiml(response);
