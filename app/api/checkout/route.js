@@ -21,7 +21,7 @@ export async function POST(req) {
         ...(email ? { customer_email: email } : {}),
         line_items: [{ price: AI_RECEPTIONIST_PRICE_ID, quantity: 1 }],
         metadata: { plan: 'ai_receptionist' },
-        success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}&plan=ai_receptionist`,
         cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
       });
       return Response.json({ url: session.url });
