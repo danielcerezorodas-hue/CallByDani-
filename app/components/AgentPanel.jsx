@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Fragment } from "react";
 import { agentApi, post } from "./agentApi";
 import { supabase } from "../supabase";
 
@@ -664,7 +664,10 @@ function AgentTab({ lines, liveCall, onFinishCall }) {
                   {lines.map(l => <option key={l.phone_number} value={l.phone_number}>{l.business_name}</option>)}
                 </select>
               </Field>
-              <div style={{ color: C.light, fontSize: 12 }}>Cuando contestes una llamada, la empresa se carga sola.</div>
+              <div style={{ color: C.light, fontSize: 12, lineHeight: 1.6 }}>
+                Cuando contestes una llamada, la empresa y la nota se cargan solas.
+                Para anotar una llamada anterior (perdida o buzón), ve a 📋 Registro → 📝 Agregar nota.
+              </div>
             </div>
           )}
         </Card>
@@ -768,8 +771,62 @@ const WHATSAPP = {
   skipped: { label: "💬 No enviado", color: "gray" },
 };
 
-function CallLogTab({ isAdmin }) {
+// Poner o editar la nota de una llamada pasada (perdida, buzón, o si se olvidó durante la llamada)
+function NoteEditor({ call, line, onSaved, onCancel }) {
+  const canWhatsapp = !!line?.owner_whatsapp;
+  const [form, setForm] = useState({
+    callerName: call.caller_name || "",
+    callerPhone: call.caller_phone || call.from_number || "",
+    reason: call.reason || "",
+    note: call.note || "",
+    urgent: !!call.urgent,
+    // Si ya tenía nota, no reenviamos el WhatsApp salvo que lo marquen
+    sendWhatsapp: canWhatsapp && !call.note_saved_at,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const set = key => e => setForm(f => ({ ...f, [key]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
+
+  async function save() {
+    setSaving(true); setError("");
+    try {
+      await post("/api/agent/note", { callSid: call.call_sid, ...form, sendWhatsapp: form.sendWhatsapp && canWhatsapp });
+      onSaved();
+    } catch (e) { setError(e.message); setSaving(false); }
+  }
+
+  return (
+    <div style={{ background: C.blueDim, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
+        <Field label="NOMBRE"><input value={form.callerName} onChange={set("callerName")} placeholder="John Smith" style={inputStyle} /></Field>
+        <Field label="TELÉFONO"><input value={form.callerPhone} onChange={set("callerPhone")} style={inputStyle} /></Field>
+        <Field label="MOTIVO"><input value={form.reason} onChange={set("reason")} placeholder="Quiere agendar una cita" style={inputStyle} /></Field>
+      </div>
+      <Field label="NOTA">
+        <textarea value={form.note} onChange={set("note")} rows={3} placeholder="Detalles, qué se le prometió, si hay que devolver la llamada..."
+          style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }} />
+      </Field>
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.red, fontWeight: 700, cursor: "pointer" }}>
+          <input type="checkbox" checked={form.urgent} onChange={set("urgent")} /> Urgente
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: canWhatsapp ? C.text : C.light, cursor: canWhatsapp ? "pointer" : "default" }}>
+          <input type="checkbox" checked={form.sendWhatsapp && canWhatsapp} disabled={!canWhatsapp} onChange={set("sendWhatsapp")} />
+          {canWhatsapp ? `Mandar resumen por WhatsApp a ${formatPhone(line.owner_whatsapp)}` : "Esta empresa no tiene WhatsApp configurado"}
+        </label>
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <Btn variant="success" size="sm" onClick={save} disabled={saving}>{saving ? "Guardando..." : "Guardar nota"}</Btn>
+        <Btn variant="ghost" size="sm" onClick={onCancel} disabled={saving}>Cancelar</Btn>
+      </div>
+      <ErrorText>{error}</ErrorText>
+    </div>
+  );
+}
+
+function CallLogTab({ isAdmin, lines }) {
   const [calls, setCalls] = useState([]);
+  const [editing, setEditing] = useState(null); // id de la llamada con el editor abierto
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -789,7 +846,7 @@ function CallLogTab({ isAdmin }) {
   return (
     <Card style={{ overflow: "hidden" }}>
       <div style={{ padding: "18px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <div style={{ fontWeight: 800, fontSize: 15, color: C.navy }}>📋 {isAdmin ? "Todas las llamadas" : "Mis llamadas"}</div>
+        <div style={{ fontWeight: 800, fontSize: 15, color: C.navy }}>📋 {isAdmin ? "Todas las llamadas" : "Mis llamadas y las no atendidas"}</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <Badge label={`${todays.length} hoy`} color="blue" />
           <Badge label={`${count("completed")} atendidas`} color="green" />
@@ -815,8 +872,10 @@ function CallLogTab({ isAdmin }) {
             {calls.map(call => {
               const st = STATUS[call.status] || { label: call.status || "—", color: "gray" };
               const wa = WHATSAPP[call.whatsapp_status];
+              const hasNote = call.reason || call.note || call.urgent;
               return (
-                <tr key={call.id} style={{ borderTop: `1px solid ${C.border}`, verticalAlign: "top" }}>
+                <Fragment key={call.id}>
+                <tr style={{ borderTop: `1px solid ${C.border}`, verticalAlign: "top" }}>
                   <td style={{ padding: "14px 16px", fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>
                     {new Date(call.created_at).toLocaleString("es-US", { dateStyle: "short", timeStyle: "short" })}
                   </td>
@@ -829,13 +888,31 @@ function CallLogTab({ isAdmin }) {
                     {call.urgent && <Badge label="Urgente" color="red" />}
                     {call.reason && <div style={{ fontWeight: 600, marginTop: call.urgent ? 6 : 0 }}>{call.reason}</div>}
                     {call.note && <div style={{ color: C.muted, fontSize: 12, whiteSpace: "pre-wrap" }}>{call.note}</div>}
-                    {!call.reason && !call.note && !call.urgent && <span style={{ color: C.light }}>—</span>}
                     {wa && <div style={{ marginTop: 6 }} title={call.whatsapp_error || ""}><Badge label={wa.label} color={wa.color} /></div>}
+                    {editing !== call.id && (
+                      <button onClick={() => setEditing(call.id)} style={{
+                        background: "none", border: "none", padding: 0, marginTop: hasNote ? 6 : 0, color: C.blue,
+                        fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                      }}>{hasNote ? "✏️ Editar nota" : "📝 Agregar nota"}</button>
+                    )}
                   </td>
                   <td style={{ padding: "14px 16px", fontSize: 13, color: C.text }}>{call.agent_email || "—"}</td>
                   <td style={{ padding: "14px 16px", fontSize: 13, color: C.muted, fontFamily: "monospace" }}>{formatDuration(call.duration_seconds)}</td>
                   <td style={{ padding: "14px 16px" }}><Badge label={st.label} color={st.color} /></td>
                 </tr>
+                {editing === call.id && (
+                  <tr>
+                    <td colSpan={7} style={{ padding: "0 16px 16px" }}>
+                      <NoteEditor
+                        call={call}
+                        line={lines.find(l => l.phone_number === call.to_number)}
+                        onCancel={() => setEditing(null)}
+                        onSaved={() => { setEditing(null); reload(); }}
+                      />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
           </tbody>
@@ -907,7 +984,7 @@ export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, on
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
         <IncomingCalls ringingHere={ringingHere} />
         {tab === "agent" && <AgentTab lines={lines} liveCall={liveCall} onFinishCall={onFinishCall} />}
-        {tab === "calls" && <CallLogTab isAdmin={me.isAdmin} />}
+        {tab === "calls" && <CallLogTab isAdmin={me.isAdmin} lines={lines} />}
         {tab === "companies" && me.isAdmin && <CompaniesTab lines={lines} reloadLines={reloadLines} linesError={linesError} />}
         {tab === "agents" && me.isAdmin && <AgentsTab lines={lines} />}
       </div>

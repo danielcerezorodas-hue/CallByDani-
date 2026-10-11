@@ -81,7 +81,9 @@ export async function POST(req) {
     }
   }
 
-  const { error: e } = await supa.from("calls").update({ ...note, ...whatsapp }).eq("call_sid", callSid);
+  // Si no se pidió WhatsApp, no tocamos su estado (al editar una nota no se pierde que ya se envió)
+  const update = body.sendWhatsapp !== false ? { ...note, ...whatsapp } : note;
+  const { error: e } = await supa.from("calls").update(update).eq("call_sid", callSid);
   if (e) return fail(e.message, 500);
   return Response.json({ ok: true, ...whatsapp });
 }
