@@ -28,11 +28,13 @@ const STATUS = {
   completed: { label: "Answered", color: C.green, icon: "✓" },
   voicemail: { label: "Voicemail", color: C.yellow, icon: "✉" },
   missed: { label: "Missed", color: C.red, icon: "✕" },
+  ai: { label: "AI in progress", color: C.sky, icon: "🤖" },
+  ai_handled: { label: "AI answered", color: C.green, icon: "🤖" },
   outbound: { label: "Outbound", color: C.sky, icon: "↗" },
   outbound_done: { label: "Outbound", color: C.green, icon: "↗" },
   outbound_missed: { label: "No answer", color: C.muted, icon: "↗" },
 };
-const ANSWERED = ["completed", "outbound_done"];
+const ANSWERED = ["completed", "outbound_done", "ai_handled"];
 
 const PERIODS = [
   { id: "today", label: "Today" },

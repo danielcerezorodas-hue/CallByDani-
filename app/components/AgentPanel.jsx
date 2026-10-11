@@ -215,7 +215,7 @@ function IncomingCalls({ ringingHere }) {
 }
 
 // ─── EMPRESAS (ADMIN) ────────────────────────────────────────────────────────
-const emptyLine = { phone_number: "", business_name: "", owner_whatsapp: "", notes: "", client_email: "" };
+const emptyLine = { phone_number: "", business_name: "", owner_whatsapp: "", notes: "", client_email: "", answer_mode: "agents" };
 
 function CompaniesTab({ lines, reloadLines, linesError }) {
   const [selected, setSelected] = useState(null); // phone_number, o "new"
@@ -237,7 +237,7 @@ function CompaniesTab({ lines, reloadLines, linesError }) {
     setError(""); setDocError("");
     if (selected === "new" || !selected) { setForm(emptyLine); setDocs([]); return; }
     const line = lines.find(l => l.phone_number === selected);
-    if (line) setForm({ ...emptyLine, ...line, owner_whatsapp: line.owner_whatsapp || "", notes: line.notes || "", client_email: line.client_email || "" });
+    if (line) setForm({ ...emptyLine, ...line, owner_whatsapp: line.owner_whatsapp || "", notes: line.notes || "", client_email: line.client_email || "", answer_mode: line.answer_mode || "agents" });
     agentApi(`/api/agent/docs?phone=${encodeURIComponent(selected)}`)
       .then(d => setDocs(d.docs))
       .catch(e => setDocError(e.message));
@@ -314,7 +314,7 @@ function CompaniesTab({ lines, reloadLines, linesError }) {
             borderLeft: selected === l.phone_number ? `3px solid ${C.blue}` : "3px solid transparent",
           }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: selected === l.phone_number ? C.blue : C.text }}>{l.business_name}</div>
-            <div style={{ color: C.light, fontSize: 12, marginTop: 2 }}>{formatPhone(l.phone_number)} · {l.doc_count} docs {l.owner_whatsapp ? "· 💬" : ""}</div>
+            <div style={{ color: C.light, fontSize: 12, marginTop: 2 }}>{formatPhone(l.phone_number)} · {l.doc_count} docs {l.owner_whatsapp ? "· 💬" : ""} {l.answer_mode && l.answer_mode !== "agents" ? "· 🤖" : ""}</div>
           </div>
         ))}
       </Card>
@@ -342,6 +342,13 @@ function CompaniesTab({ lines, reloadLines, linesError }) {
               </div>
               <Field label="WHATSAPP DEL DUEÑO" hint="Aquí llega el resumen de cada llamada. Déjalo vacío para no mandar nada.">
                 <input value={form.owner_whatsapp} onChange={set("owner_whatsapp")} placeholder="+1 910 555 9876" style={inputStyle} />
+              </Field>
+              <Field label="QUIÉN CONTESTA LAS LLAMADAS" hint="La IA usa los documentos de abajo para responder y toma nombre, teléfono y motivo.">
+                <select value={form.answer_mode} onChange={set("answer_mode")} style={inputStyle}>
+                  <option value="agents">👥 Agentes</option>
+                  <option value="ai">🤖 IA (toma el recado, no transfiere)</option>
+                  <option value="ai_then_agents">🤖→👥 IA y luego agentes (transfiere si hace falta)</option>
+                </select>
               </Field>
               <Field label="EMAIL DEL CLIENTE" hint="Con este email entra el cliente para ver las llamadas de esta empresa en su dashboard.">
                 <input type="email" value={form.client_email} onChange={set("client_email")} placeholder="dueno@empresa.com" style={inputStyle} />
@@ -507,7 +514,7 @@ function CallNote({ liveCall, line, onFinishCall }) {
 
   // Nueva llamada → nota limpia con el teléfono de quien llama
   useEffect(() => {
-    setForm({ ...emptyNote, callerPhone: liveCall.from || "", sendWhatsapp: true });
+    setForm({ ...emptyNote, callerName: liveCall.aiName || "", callerPhone: liveCall.from || "", reason: liveCall.aiReason || "", sendWhatsapp: true });
     setResult(null);
     setError("");
   }, [liveCall.callSid]);
@@ -761,6 +768,8 @@ const STATUS = {
   completed: { label: "Atendida", color: "green" },
   voicemail: { label: "Buzón", color: "yellow" },
   missed: { label: "Perdida", color: "red" },
+  ai: { label: "🤖 IA en curso", color: "blue" },
+  ai_handled: { label: "🤖 Atendida por IA", color: "green" },
   outbound: { label: "↗ Saliente", color: "blue" },
   outbound_done: { label: "↗ Saliente", color: "green" },
   outbound_missed: { label: "↗ Sin respuesta", color: "gray" },

@@ -169,6 +169,8 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
       to: param(call, "to"),
       business: param(call, "business"),
       lang: param(call, "lang"),
+      aiName: param(call, "aiName"),
+      aiReason: param(call, "aiReason"),
     });
     call.on("disconnect", endCall);
     call.on("error", endCall);

@@ -1,19 +1,6 @@
 // El agente guarda la nota de la llamada y se manda el resumen por WhatsApp al dueño del negocio.
 import { requireAgent, db, fail, isAdmin, normalizePhone } from "../helpers";
-import { sendWhatsapp } from "../../twilio/helpers";
-
-function buildSummary({ business, callerName, callerPhone, reason, note, urgent, when }) {
-  const lines = [
-    `${urgent ? "🚨 URGENTE · " : ""}📞 Nueva llamada para ${business}`,
-    `🕒 ${when}`,
-    `👤 ${callerName || "Sin nombre"}`,
-    `📱 ${callerPhone || "Sin número"}`,
-    `📝 Motivo: ${reason || "-"}`,
-  ];
-  if (note) lines.push("", note);
-  lines.push("", "— CallByDani");
-  return lines.join("\n");
-}
+import { sendCallSummary } from "../../twilio/helpers";
 
 export async function POST(req) {
   const { user, error } = await requireAgent(req);
@@ -45,41 +32,7 @@ export async function POST(req) {
 
   // Resumen por WhatsApp
   let whatsapp = { whatsapp_status: "skipped", whatsapp_error: null };
-  if (body.sendWhatsapp !== false) {
-    const { data: line } = await supa
-      .from("phone_lines")
-      .select("owner_whatsapp, business_name")
-      .eq("phone_number", call.to_number)
-      .maybeSingle();
-    if (!line?.owner_whatsapp) {
-      whatsapp = { whatsapp_status: "skipped", whatsapp_error: "La empresa no tiene WhatsApp configurado" };
-    } else {
-      const business = line.business_name || call.business_name || "tu negocio";
-      const when = new Date(call.created_at).toLocaleString("es-US", {
-        timeZone: process.env.BUSINESS_TIMEZONE || "America/New_York",
-        dateStyle: "medium",
-        timeStyle: "short",
-      });
-      const fields = { business, when, callerName: note.caller_name, callerPhone: note.caller_phone, reason: note.reason, note: note.note, urgent: note.urgent };
-      try {
-        await sendWhatsapp(line.owner_whatsapp, {
-          body: buildSummary(fields),
-          // Variables de la plantilla: {{1}} negocio, {{2}} fecha, {{3}} nombre, {{4}} teléfono, {{5}} motivo, {{6}} nota
-          variables: {
-            1: (note.urgent ? "URGENTE · " : "") + business,
-            2: when,
-            3: note.caller_name || "Sin nombre",
-            4: note.caller_phone || "Sin número",
-            5: note.reason || "-",
-            6: note.note || "-",
-          },
-        });
-        whatsapp = { whatsapp_status: "sent", whatsapp_error: null };
-      } catch (err) {
-        whatsapp = { whatsapp_status: "failed", whatsapp_error: err?.message || "Error al mandar WhatsApp" };
-      }
-    }
-  }
+  if (body.sendWhatsapp !== false) whatsapp = await sendCallSummary(supa, call, note);
 
   // Si no se pidió WhatsApp, no tocamos su estado (al editar una nota no se pierde que ya se envió)
   const update = body.sendWhatsapp !== false ? { ...note, ...whatsapp } : note;

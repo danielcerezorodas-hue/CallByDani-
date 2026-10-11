@@ -128,6 +128,57 @@ export async function sendWhatsapp(to, { body, variables }) {
   return client.messages.create(msg);
 }
 
+function buildSummary({ business, callerName, callerPhone, reason, note, urgent, when }) {
+  const lines = [
+    `${urgent ? "🚨 URGENTE · " : ""}📞 Nueva llamada para ${business}`,
+    `🕒 ${when}`,
+    `👤 ${callerName || "Sin nombre"}`,
+    `📱 ${callerPhone || "Sin número"}`,
+    `📝 Motivo: ${reason || "-"}`,
+  ];
+  if (note) lines.push("", note);
+  lines.push("", "— CallByDani");
+  return lines.join("\n");
+}
+
+// Manda el resumen de la llamada por WhatsApp al dueño de la empresa.
+// call: { to_number, business_name, created_at } · note: { caller_name, caller_phone, reason, note, urgent }
+// Devuelve { whatsapp_status, whatsapp_error } para guardar en la llamada.
+export async function sendCallSummary(supa, call, note) {
+  const { data: line } = await supa
+    .from("phone_lines")
+    .select("owner_whatsapp, business_name")
+    .eq("phone_number", call.to_number)
+    .maybeSingle();
+  if (!line?.owner_whatsapp) {
+    return { whatsapp_status: "skipped", whatsapp_error: "La empresa no tiene WhatsApp configurado" };
+  }
+  const business = line.business_name || call.business_name || "tu negocio";
+  const when = new Date(call.created_at).toLocaleString("es-US", {
+    timeZone: process.env.BUSINESS_TIMEZONE || "America/New_York",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  const fields = { business, when, callerName: note.caller_name, callerPhone: note.caller_phone, reason: note.reason, note: note.note, urgent: note.urgent };
+  try {
+    await sendWhatsapp(line.owner_whatsapp, {
+      body: buildSummary(fields),
+      // Variables de la plantilla: {{1}} negocio, {{2}} fecha, {{3}} nombre, {{4}} teléfono, {{5}} motivo, {{6}} nota
+      variables: {
+        1: (note.urgent ? "URGENTE · " : "") + business,
+        2: when,
+        3: note.caller_name || "Sin nombre",
+        4: note.caller_phone || "Sin número",
+        5: note.reason || "-",
+        6: note.note || "-",
+      },
+    });
+    return { whatsapp_status: "sent", whatsapp_error: null };
+  } catch (err) {
+    return { whatsapp_status: "failed", whatsapp_error: err?.message || "Error al mandar WhatsApp" };
+  }
+}
+
 // Voces y textos en cada idioma
 export const VOICE = {
   en: { voice: "Polly.Joanna", language: "en-US" },
@@ -173,7 +224,8 @@ export async function findAgents(phoneNumber, stage) {
 }
 
 // Arma la respuesta para sonar a los agentes (o mandar a buzón si no hay nadie).
-export async function ringAgents(req, response, { to, from, lang, business, callSid, stage }) {
+// extra: parámetros adicionales para la pantalla del agente (p. ej. lo que ya tomó la IA)
+export async function ringAgents(req, response, { to, from, lang, business, callSid, stage, extra = {} }) {
   const base = origin(req);
   let agents = await findAgents(to, stage);
   // Si no hay asignados conectados, pasamos directo a los de varias líneas
@@ -202,8 +254,28 @@ export async function ringAgents(req, response, { to, from, lang, business, call
     client.parameter({ name: "to", value: to || "" });
     client.parameter({ name: "business", value: business || "" });
     client.parameter({ name: "lang", value: lang });
+    for (const [name, value] of Object.entries(extra)) {
+      if (value) client.parameter({ name, value: String(value).slice(0, 500) });
+    }
   }
   return response;
+}
+
+// Cierra una llamada que atendió la IA (al despedirse o si el cliente cuelga):
+// la marca como atendida por IA y, si tomó datos, manda el resumen por WhatsApp una sola vez.
+export async function finishAiCall(supa, callSid) {
+  const { data: call } = await supa
+    .from("calls")
+    .select("call_sid, to_number, from_number, business_name, created_at, status, caller_name, caller_phone, reason, note, urgent, note_saved_at")
+    .eq("call_sid", callSid)
+    .maybeSingle();
+  if (!call || call.status !== "ai") return;
+  const update = { status: "ai_handled" };
+  if ((call.caller_name || call.reason || call.note) && !call.note_saved_at) {
+    update.note_saved_at = new Date().toISOString();
+    Object.assign(update, await sendCallSummary(supa, call, { ...call, caller_phone: call.caller_phone || call.from_number }));
+  }
+  await supa.from("calls").update(update).eq("call_sid", callSid).eq("status", "ai");
 }
 
 export function leaveVoicemail(req, response, lang) {
