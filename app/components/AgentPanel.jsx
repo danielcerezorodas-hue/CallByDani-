@@ -922,11 +922,125 @@ function CallLogTab({ isAdmin, lines }) {
   );
 }
 
+// ─── MIS NOTAS (BLOC PERSONAL) ───────────────────────────────────────────────
+function timeAgo(iso) {
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return "ahora";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  if (d === 1) return "ayer";
+  if (d < 7) return `hace ${d} días`;
+  return new Date(iso).toLocaleDateString("es-US", { dateStyle: "medium" });
+}
+
+function NotesTab() {
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(null); // { id, content }
+
+  useEffect(() => {
+    agentApi("/api/agent/notes")
+      .then(d => setNotes(d.notes))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function add() {
+    if (!draft.trim()) return;
+    setSaving(true); setError("");
+    try {
+      const { note } = await post("/api/agent/notes", { content: draft });
+      setNotes(list => [note, ...list]);
+      setDraft("");
+    } catch (e) { setError(e.message); }
+    setSaving(false);
+  }
+
+  async function saveEdit() {
+    setError("");
+    try {
+      const { note } = await agentApi("/api/agent/notes", { method: "PATCH", body: editing });
+      setNotes(list => [note, ...list.filter(n => n.id !== note.id)]);
+      setEditing(null);
+    } catch (e) { setError(e.message); }
+  }
+
+  async function remove(n) {
+    if (!window.confirm("¿Borrar esta nota?")) return;
+    setError("");
+    try {
+      await agentApi(`/api/agent/notes?id=${n.id}`, { method: "DELETE" });
+      setNotes(list => list.filter(x => x.id !== n.id));
+    } catch (e) { setError(e.message); }
+  }
+
+  const ctrlEnter = fn => e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) fn(); };
+
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <Card style={{ padding: 20, marginBottom: 20 }}>
+        <div style={{ fontWeight: 800, fontSize: 14, color: C.navy, marginBottom: 4 }}>🗒️ Nueva nota</div>
+        <div style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Recordatorios, pendientes, datos sueltos. Solo tú las ves.</div>
+        <textarea value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={ctrlEnter(add)} rows={3}
+          placeholder="Ej: Devolver llamada al Sr. López mañana a las 10am"
+          style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5, marginBottom: 10 }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <span style={{ color: C.light, fontSize: 11 }}>Ctrl + Enter para guardar</span>
+          <Btn onClick={add} disabled={saving || !draft.trim()}>{saving ? "Guardando..." : "Guardar nota"}</Btn>
+        </div>
+        <ErrorText>{error}</ErrorText>
+      </Card>
+
+      {loading && <div style={{ color: C.muted, fontSize: 13 }}>Cargando notas...</div>}
+      {!loading && notes.length === 0 && !error && (
+        <div style={{ color: C.light, fontSize: 13, textAlign: "center", padding: 30 }}>Todavía no tienes notas.</div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {notes.map(n => (
+          <Card key={n.id} style={{ padding: "16px 18px" }}>
+            {editing?.id === n.id ? (
+              <>
+                <textarea value={editing.content} onChange={e => setEditing({ ...editing, content: e.target.value })}
+                  onKeyDown={ctrlEnter(saveEdit)} rows={4} autoFocus
+                  style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5, marginBottom: 10 }} />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <Btn size="sm" variant="success" onClick={saveEdit} disabled={!editing.content.trim()}>Guardar</Btn>
+                  <Btn size="sm" variant="ghost" onClick={() => setEditing(null)}>Cancelar</Btn>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 14, color: C.text, whiteSpace: "pre-wrap", lineHeight: 1.6, wordBreak: "break-word" }}>{n.content}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10 }}>
+                  <span style={{ color: C.light, fontSize: 11 }} title={new Date(n.updated_at).toLocaleString("es-US")}>
+                    {n.updated_at !== n.created_at ? "editada " : ""}{timeAgo(n.updated_at)}
+                  </span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <Btn size="sm" variant="ghost" onClick={() => setEditing({ id: n.id, content: n.content })}>Editar</Btn>
+                    <Btn size="sm" variant="ghost" onClick={() => remove(n)}>Borrar</Btn>
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, onLogout }) {
   const tabs = [
     { id: "agent", label: "🎧 Llamada", sub: "Asistente y nota" },
     { id: "calls", label: "📋 Registro", sub: "Historial" },
+    { id: "notes", label: "🗒️ Mis notas", sub: "Bloc personal" },
     ...(me.isAdmin ? [
       { id: "companies", label: "🏢 Empresas", sub: "Números y documentos" },
       { id: "agents", label: "👥 Agentes", sub: "Acceso y líneas" },
@@ -985,6 +1099,7 @@ export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, on
         <IncomingCalls ringingHere={ringingHere} />
         {tab === "agent" && <AgentTab lines={lines} liveCall={liveCall} onFinishCall={onFinishCall} />}
         {tab === "calls" && <CallLogTab isAdmin={me.isAdmin} lines={lines} />}
+        {tab === "notes" && <NotesTab />}
         {tab === "companies" && me.isAdmin && <CompaniesTab lines={lines} reloadLines={reloadLines} linesError={linesError} />}
         {tab === "agents" && me.isAdmin && <AgentsTab lines={lines} />}
       </div>
