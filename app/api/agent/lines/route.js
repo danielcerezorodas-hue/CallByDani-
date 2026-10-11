@@ -7,7 +7,7 @@ export async function GET(req) {
 
   const supa = db();
   const [{ data: lines, error: e1 }, { data: docs, error: e2 }] = await Promise.all([
-    supa.from("phone_lines").select("phone_number, business_name, owner_whatsapp, notes").order("business_name"),
+    supa.from("phone_lines").select("phone_number, business_name, owner_whatsapp, notes, client_email").order("business_name"),
     supa.from("company_docs").select("phone_number"),
   ]);
   if (e1 || e2) return fail((e1 || e2).message, 500);
@@ -33,7 +33,10 @@ export async function POST(req) {
     business_name: name,
     owner_whatsapp: body.owner_whatsapp ? normalizePhone(body.owner_whatsapp) : null,
     notes: String(body.notes || "").trim() || null,
+    // Cliente que ve esta empresa en su dashboard (siempre en minúsculas)
+    client_email: String(body.client_email || "").trim().toLowerCase() || null,
   };
+  if (row.client_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.client_email)) return fail("Email del cliente inválido");
   const { error: e } = await db().from("phone_lines").upsert(row, { onConflict: "phone_number" });
   if (e) return fail(e.message, 500);
   return Response.json({ line: row });

@@ -215,7 +215,7 @@ function IncomingCalls({ ringingHere }) {
 }
 
 // ─── EMPRESAS (ADMIN) ────────────────────────────────────────────────────────
-const emptyLine = { phone_number: "", business_name: "", owner_whatsapp: "", notes: "" };
+const emptyLine = { phone_number: "", business_name: "", owner_whatsapp: "", notes: "", client_email: "" };
 
 function CompaniesTab({ lines, reloadLines, linesError }) {
   const [selected, setSelected] = useState(null); // phone_number, o "new"
@@ -237,7 +237,7 @@ function CompaniesTab({ lines, reloadLines, linesError }) {
     setError(""); setDocError("");
     if (selected === "new" || !selected) { setForm(emptyLine); setDocs([]); return; }
     const line = lines.find(l => l.phone_number === selected);
-    if (line) setForm({ ...emptyLine, ...line, owner_whatsapp: line.owner_whatsapp || "", notes: line.notes || "" });
+    if (line) setForm({ ...emptyLine, ...line, owner_whatsapp: line.owner_whatsapp || "", notes: line.notes || "", client_email: line.client_email || "" });
     agentApi(`/api/agent/docs?phone=${encodeURIComponent(selected)}`)
       .then(d => setDocs(d.docs))
       .catch(e => setDocError(e.message));
@@ -342,6 +342,9 @@ function CompaniesTab({ lines, reloadLines, linesError }) {
               </div>
               <Field label="WHATSAPP DEL DUEÑO" hint="Aquí llega el resumen de cada llamada. Déjalo vacío para no mandar nada.">
                 <input value={form.owner_whatsapp} onChange={set("owner_whatsapp")} placeholder="+1 910 555 9876" style={inputStyle} />
+              </Field>
+              <Field label="EMAIL DEL CLIENTE" hint="Con este email entra el cliente para ver las llamadas de esta empresa en su dashboard.">
+                <input type="email" value={form.client_email} onChange={set("client_email")} placeholder="dueno@empresa.com" style={inputStyle} />
               </Field>
               <Field label="INSTRUCCIONES PARA LOS AGENTES" hint="Ej: 'Si es emergencia de agua, marca urgente.' La IA también las lee.">
                 <textarea value={form.notes} onChange={set("notes")} rows={3} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }} />
