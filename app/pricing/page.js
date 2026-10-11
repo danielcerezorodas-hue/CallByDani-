@@ -26,6 +26,18 @@ const TIERS = [
   { min: 4, max: Infinity, price: 1550, label: "4+ agents", note: "Save $447 per agent · Extended coverage" },
 ];
 
+// Plan de IA (precio fijo). Si cambias el precio, cámbialo también en Stripe.
+const AI_PLAN = {
+  price: 197,
+  features: [
+    "AI voice receptionist 24/7",
+    "English & Spanish",
+    "600 minutes included",
+    "$0.25 per extra minute",
+    "Lead capture & call summaries",
+  ],
+};
+
 const HOURS_PER_AGENT = 40; // 8 horas x 5 días
 const MAX_AGENTS = 20;
 const HOURS_PER_MONTH = (HOURS_PER_AGENT * 52) / 12; // ~173 horas al mes
@@ -81,6 +93,7 @@ export default function PricingPage() {
   const [agents, setAgents] = useState(1);
   const [loading, setLoading] = useState(null); // qué botón está cargando
   const [checkoutError, setCheckoutError] = useState("");
+  const [aiError, setAiError] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
 
   const [email, setEmail] = useState("");
@@ -122,6 +135,28 @@ export default function PricingPage() {
       setCheckoutError("Checkout error: " + (data.error || "unknown"));
     } catch (err) {
       setCheckoutError("Something went wrong. Please try again.");
+    }
+    setLoading(null);
+  }
+
+  // Plan AI Receptionist: suscripción fija, sin cantidad de agentes
+  async function subscribeAI() {
+    setLoading("ai");
+    setAiError("");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "ai_receptionist" }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setAiError("Checkout error: " + (data.error || "unknown"));
+    } catch (err) {
+      setAiError("Something went wrong. Please try again.");
     }
     setLoading(null);
   }
@@ -179,7 +214,33 @@ export default function PricingPage() {
 
       {/* TIERS */}
       <section style={{ padding: "0 24px", marginTop: -56 }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+        <div style={{ maxWidth: 1140, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          {/* AI RECEPTIONIST */}
+          <div style={{
+            background: C.navyDark, color: C.white, borderRadius: 20, padding: "30px 26px", position: "relative",
+            display: "flex", flexDirection: "column", border: `2px solid ${C.navyLight}`,
+            boxShadow: "0 8px 30px rgba(15,30,48,0.18)",
+          }}>
+            <div style={{ position: "absolute", top: 18, right: 18, background: `${C.sky}22`, color: C.sky, borderRadius: 20, padding: "3px 12px", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>NEW · AI</div>
+            <div style={{ color: C.sky, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 10 }}>AI RECEPTIONIST</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 900 }}>{money(AI_PLAN.price)}</div>
+            <div style={{ color: C.light, fontSize: 13, marginBottom: 16 }}>per month</div>
+            <ul style={{ listStyle: "none", flex: 1, marginBottom: 20 }}>
+              {AI_PLAN.features.map(f => (
+                <li key={f} style={{ display: "flex", gap: 8, fontSize: 13, lineHeight: 1.5, marginBottom: 8, color: "rgba(255,255,255,0.85)" }}>
+                  <span style={{ color: C.green, fontWeight: 900 }}>✓</span>{f}
+                </li>
+              ))}
+            </ul>
+            <button onClick={subscribeAI} disabled={loading !== null} style={{
+              width: "100%", padding: "13px 0", borderRadius: 12, fontWeight: 800, fontSize: 14, fontFamily: "inherit",
+              cursor: loading ? "not-allowed" : "pointer", background: C.white, color: C.navyDark, border: "none",
+            }}>
+              {loading === "ai" ? "Loading..." : "Subscribe — AI Receptionist →"}
+            </button>
+            {aiError && <div style={{ color: "#f87171", fontSize: 12, marginTop: 10 }}>⚠ {aiError}</div>}
+          </div>
+
           {TIERS.map((t, i) => {
             const active = agents >= t.min && agents <= t.max;
             return (
