@@ -147,8 +147,10 @@ export default function LandingPage() {
   html { scroll-behavior: smooth; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
   .desktop-nav { display: flex !important; }
+  .desktop-nav a, .desktop-nav button { white-space: nowrap; }
   .mobile-only { display: none !important; }
-  @media (max-width: 768px) {
+  /* Menú completo solo si cabe; en tablets, portátiles pequeños y móvil en horizontal sale la hamburguesa */
+  @media (max-width: 1100px) {
     .desktop-nav { display: none !important; }
     .mobile-only { display: flex !important; }
   }
