@@ -307,6 +307,14 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
             {formatPhone(activeInfo.from)}
             {!activeInfo.outbound && ` · ${activeInfo.lang === "es" ? "Español" : "English"}`}
           </div>
+          {/* Las salientes se graban: el agente avisa al empezar a hablar */}
+          {activeInfo.outbound && (
+            <div style={{ background: "#fbbf241a", border: "1px solid #fbbf2455", borderRadius: 10, padding: "9px 11px", marginBottom: 12, fontSize: 12, lineHeight: 1.5 }}>
+              <div style={{ color: "#fbbf24", fontWeight: 800, marginBottom: 4 }}>🎙️ Avisa que la llamada se graba</div>
+              <div style={{ color: C.white }}>"This call may be recorded for quality and training purposes."</div>
+              <div style={{ color: C.muted }}>"Esta llamada puede ser grabada para fines de calidad y capacitación."</div>
+            </div>
+          )}
           {showPad && <Keypad onPress={pressKey} />}
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={toggleMute} style={btn(muted ? "#f59e0b" : C.navy)}>{muted ? "Activar mic" : "Silenciar"}</button>
