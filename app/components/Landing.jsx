@@ -21,6 +21,7 @@ const C = {
   green: "#22c55e",
   greenDim: "#22c55e15",
   gold: "#f59e0b",
+  pumpkin: "#f97316",
 };
 
 const STATS = [
@@ -102,6 +103,12 @@ export default function LandingPage() {
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  // Decoración de Halloween: solo en octubre (o con ?halloween=1 para verla en cualquier fecha)
+  const [halloween, setHalloween] = useState(false);
+  useEffect(() => {
+    const forced = new URLSearchParams(window.location.search).get("halloween") === "1";
+    setHalloween(forced || new Date().getMonth() === 9);
+  }, []);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll);
@@ -145,6 +152,12 @@ export default function LandingPage() {
     .desktop-nav { display: none !important; }
     .mobile-only { display: flex !important; }
   }
+  @keyframes batFly { 0% { transform: translate(0, 0) scale(1); } 25% { transform: translate(30vw, -6vh) scale(0.9); } 50% { transform: translate(60vw, 4vh) scale(1.05); } 75% { transform: translate(85vw, -4vh) scale(0.9); } 100% { transform: translate(115vw, 2vh) scale(1); } }
+  @keyframes ghostFloat { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-18px) rotate(4deg); } }
+  @keyframes pumpkinGlow { 0%, 100% { filter: drop-shadow(0 0 10px #f9731680); } 50% { filter: drop-shadow(0 0 22px #f97316cc); } }
+  .hw-deco { position: absolute; pointer-events: none; user-select: none; line-height: 1; }
+  @media (prefers-reduced-motion: reduce) { .hw-deco { animation: none !important; } }
+  @media (max-width: 480px) { .hw-hide-sm { display: none; } }
 `}</style>
 
       {/* NAVBAR */}
@@ -197,11 +210,34 @@ export default function LandingPage() {
       {/* HERO */}
       <section style={{ background: `linear-gradient(160deg, ${C.navyDark} 0%, ${C.navyLight} 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 24px 80px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "10%", right: "-5%", width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle, ${C.blue}20, transparent 70%)`, filter: "blur(60px)" }} />
-        <div style={{ maxWidth: 780, margin: "0 auto", textAlign: "center", position: "relative" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.3)", borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.blue }} />
-            <span style={{ color: C.sky, fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>BILINGUAL CALL CENTER · AI POWERED</span>
+
+        {/* HALLOWEEN: decoración (no tapa ni bloquea nada) */}
+        {halloween && (
+          <div aria-hidden="true">
+            <div style={{ position: "absolute", bottom: "-10%", left: "-8%", width: 420, height: 420, borderRadius: "50%", background: `radial-gradient(circle, ${C.pumpkin}30, transparent 70%)`, filter: "blur(70px)", pointerEvents: "none" }} />
+            <div className="hw-deco" style={{ top: "6%", right: "8%", fontSize: "clamp(40px, 6vw, 72px)", opacity: 0.9 }}>🌕</div>
+            {[{ top: "16%", delay: "0s", dur: "14s", size: 28 }, { top: "24%", delay: "4s", dur: "17s", size: 22 }, { top: "11%", delay: "8s", dur: "12s", size: 18 }].map((b, i) => (
+              <div key={i} className="hw-deco" style={{ top: b.top, left: "-10vw", fontSize: b.size, opacity: 0.85, animation: `batFly ${b.dur} linear ${b.delay} infinite` }}>🦇</div>
+            ))}
+            <div className="hw-deco hw-hide-sm" style={{ top: "34%", left: "6%", fontSize: "clamp(34px, 5vw, 56px)", opacity: 0.75, animation: "ghostFloat 4s ease-in-out infinite" }}>👻</div>
+            <div className="hw-deco" style={{ bottom: "6%", left: "5%", fontSize: "clamp(40px, 6vw, 64px)", animation: "pumpkinGlow 2.5s ease-in-out infinite" }}>🎃</div>
+            <div className="hw-deco" style={{ bottom: "8%", right: "6%", fontSize: "clamp(32px, 5vw, 52px)", animation: "pumpkinGlow 3s ease-in-out 0.8s infinite" }}>🎃</div>
+            <div className="hw-deco" style={{ top: 64, left: 0, fontSize: "clamp(48px, 7vw, 84px)", opacity: 0.35 }}>🕸️</div>
           </div>
+        )}
+
+        <div style={{ maxWidth: 780, margin: "0 auto", textAlign: "center", position: "relative" }}>
+          {halloween ? (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `${C.pumpkin}26`, border: `1px solid ${C.pumpkin}66`, borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
+              <span style={{ fontSize: 14 }}>🎃</span>
+              <span style={{ color: "#fdba74", fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>HAPPY HALLOWEEN · BILINGUAL CALL CENTER</span>
+            </div>
+          ) : (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.3)", borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.blue }} />
+              <span style={{ color: C.sky, fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>BILINGUAL CALL CENTER · AI POWERED</span>
+            </div>
+          )}
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(38px, 6vw, 68px)", fontWeight: 900, color: C.white, lineHeight: 1.1, marginBottom: 20 }}>
             Your calls answered.<br />
             <span style={{ fontStyle: "italic", color: C.sky }}>Every single one.</span>
@@ -223,6 +259,27 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* HALLOWEEN: franja */}
+      {halloween && (
+        <section id="halloween" style={{ background: `linear-gradient(90deg, #7c2d12, ${C.pumpkin} 50%, #7c2d12)`, padding: "22px 24px" }}>
+          <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px 20px", flexWrap: "wrap", textAlign: "center" }}>
+            <span aria-hidden="true" style={{ fontSize: 26 }}>👻</span>
+            <div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(18px, 2.6vw, 24px)", fontWeight: 900, color: C.white }}>
+                Don't let missed calls haunt your business.
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, marginTop: 2 }}>
+                Every call answered in English & Spanish — no tricks, just treats for your customers. 🍬
+              </div>
+            </div>
+            <button onClick={() => window.location.href = "/pricing"} style={{
+              background: C.navyDark, color: C.white, border: "none", borderRadius: 10, padding: "11px 22px",
+              fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+            }}>Get Started →</button>
+          </div>
+        </section>
+      )}
 
       {/* DEMO VIDEO */}
 <section id="demo" style={{ padding: "90px 24px", background: C.navyDark }}>
