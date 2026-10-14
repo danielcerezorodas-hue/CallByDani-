@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { AGENT_PRICE_ID, SETUP_FEE_PRICE_ID, AI_RECEPTIONIST_PRICE_ID } from '../stripe/prices';
+import { AGENT_PRICE_ID, SETUP_FEE_PRICE_ID, SETUP_FEE_PER_AGENT, AI_RECEPTIONIST_PRICE_ID } from '../stripe/prices';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -42,7 +42,7 @@ export async function POST(req) {
           metadata: { agents: String(quantity), setup_fee: 'on_trial_end' },
         },
         custom_text: {
-          submit: { message: `You won't be charged today. If you stay after your ${TRIAL_DAYS}-day free trial, your first month and the one-time setup fee are charged on day ${TRIAL_DAYS + 1}.` },
+          submit: { message: `You won't be charged today. If you stay after your ${TRIAL_DAYS}-day free trial, on day ${TRIAL_DAYS + 1} you'll be charged your first month plus a one-time setup fee of $${(SETUP_FEE_PER_AGENT * quantity).toLocaleString('en-US')}${quantity > 1 ? ` ($${SETUP_FEE_PER_AGENT} per agent)` : ''}.` },
         },
         metadata: { agents: String(quantity), trial: 'true', setup_fee: 'on_trial_end' },
         success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}&trial=1`,
