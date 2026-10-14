@@ -3,11 +3,12 @@
 import { requireClient, fail } from "../helpers";
 
 export async function GET(req) {
-  const { supa, user, email, admin, lines, error } = await requireClient(req);
+  const { supa, user, email, admin, lines, accountStatus, active, error } = await requireClient(req);
   if (error) return error;
 
+  // Mientras la línea no está activa, el dashboard se ve bloqueado y sin llamadas
   let calls = [];
-  if (lines.length) {
+  if (active && lines.length) {
     const since = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString(); // últimos 90 días
     const { data, error: e } = await supa
       .from("calls")
@@ -25,5 +26,5 @@ export async function GET(req) {
     }));
   }
 
-  return Response.json({ email, isAdmin: admin, plan: user.app_metadata?.plan || null, lines, calls });
+  return Response.json({ email, isAdmin: admin, plan: user.app_metadata?.plan || null, accountStatus, lines, calls });
 }

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, Fragment } from "react";
 import { agentApi, post } from "./agentApi";
 import { supabase } from "../supabase";
+import { SECTIONS, planLabel } from "../dashboard/onboardingFields";
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
 const C = {
@@ -1044,6 +1045,176 @@ function NotesTab() {
   );
 }
 
+// ─── CLIENTES (solo admin) ───────────────────────────────────────────────────
+// Onboarding, documentos y acuerdo firmado de cada cliente, y el botón para activar su línea.
+function formatDateTime(iso) {
+  return iso ? new Date(iso).toLocaleString("es-US", { dateStyle: "medium", timeStyle: "short" }) : "—";
+}
+
+function ClientCard({ client, onStatus }) {
+  const [open, setOpen] = useState(false);
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const ob = client.onboarding;
+  const data = ob?.data || {};
+  const signed = client.agreements[0];
+  const active = client.account_status === "active";
+
+  async function setStatus(status) {
+    const msg = status === "active"
+      ? `¿Activar la línea de ${data.legal_name || client.email}? El cliente verá su dashboard desbloqueado.`
+      : `¿Volver a bloquear el dashboard de ${data.legal_name || client.email}?`;
+    if (!window.confirm(msg)) return;
+    setBusy(true); setError("");
+    try { await onStatus(client.email, status); }
+    catch (e) { setError(e.message); }
+    setBusy(false);
+  }
+
+  async function viewDoc(id) {
+    try { const { url } = await agentApi(`/api/agent/clients?doc=${id}`); window.open(url, "_blank", "noopener"); }
+    catch (e) { setError(e.message); }
+  }
+
+  return (
+    <Card style={{ marginBottom: 12, overflow: "hidden" }}>
+      <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div onClick={() => setOpen(!open)} style={{ flex: "1 1 240px", cursor: "pointer", minWidth: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: C.navy }}>{data.legal_name || signed?.company_name || "Sin nombre todavía"}</div>
+          <div style={{ color: C.muted, fontSize: 12, marginTop: 2, wordBreak: "break-all" }}>
+            {client.email} · {planLabel(client.plan)} · {client.lines.length ? client.lines.map(l => formatPhone(l.phone_number)).join(", ") : "sin número asignado"}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <Badge label={signed ? `✓ Acuerdo v${signed.agreement_version}` : "Sin acuerdo"} color={signed ? "green" : "gray"} />
+          <Badge label={ob?.status === "ready_for_setup" ? "✓ Onboarding enviado" : ob ? "Onboarding a medias" : "Sin onboarding"} color={ob?.status === "ready_for_setup" ? "green" : ob ? "yellow" : "gray"} />
+          <Badge label={active ? "Línea activa" : "🔒 Pendiente"} color={active ? "green" : "yellow"} />
+          {active
+            ? <Btn size="sm" variant="ghost" disabled={busy} onClick={() => setStatus("pending_setup")}>Desactivar</Btn>
+            : <Btn size="sm" variant="success" disabled={busy} onClick={() => setStatus("active")}>Activar línea</Btn>}
+          <Btn size="sm" variant="secondary" onClick={() => setOpen(!open)}>{open ? "Ocultar" : "Ver"}</Btn>
+        </div>
+      </div>
+      {error && <div style={{ padding: "0 20px 12px" }}><ErrorText>{error}</ErrorText></div>}
+      {!active && client.lines.length === 0 && open && (
+        <div style={{ margin: "0 20px 12px", background: C.yellowDim, border: `1px solid ${C.yellowBorder}`, color: C.yellow, borderRadius: 10, padding: "8px 12px", fontSize: 12 }}>
+          Antes de activar: en la pestaña Empresas, asígnale un número poniendo {client.email} en "EMAIL DEL CLIENTE".
+        </div>
+      )}
+
+      {open && (
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: "16px 20px", display: "grid", gap: 18 }}>
+          {/* Onboarding */}
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: C.navy, marginBottom: 8 }}>
+              Onboarding {ob?.submitted_at && <span style={{ color: C.muted, fontWeight: 500 }}>· enviado {formatDateTime(ob.submitted_at)}</span>}
+            </div>
+            {!ob ? <div style={{ color: C.light, fontSize: 13 }}>Todavía no ha empezado el formulario.</div> : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12 }}>
+                {SECTIONS.filter(s => s.fields.length).map(s => (
+                  <div key={s.id} style={{ background: C.bg, borderRadius: 10, padding: "10px 12px" }}>
+                    <div style={{ fontWeight: 800, fontSize: 12, color: C.muted, letterSpacing: 0.5, marginBottom: 6 }}>{s.title.toUpperCase()}</div>
+                    {s.fields.map(f => {
+                      const v = data[f.key];
+                      const text = Array.isArray(v) ? v.join(", ") : v;
+                      return (
+                        <div key={f.key} style={{ fontSize: 12, lineHeight: 1.6, display: "flex", gap: 8 }}>
+                          <span style={{ color: C.muted, flex: "0 0 130px" }}>{f.label}</span>
+                          <span style={{ color: text ? C.text : C.light, whiteSpace: "pre-wrap", wordBreak: "break-word", minWidth: 0 }}>{text || "—"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Documentos */}
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: C.navy, marginBottom: 8 }}>Documentos ({client.documents.length})</div>
+            {client.documents.length === 0 && <div style={{ color: C.light, fontSize: 13 }}>No ha subido documentos.</div>}
+            {client.documents.map(d => (
+              <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, padding: "6px 0" }}>
+                <span>📄</span>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.file_name}</span>
+                <span style={{ color: C.light, fontSize: 11 }}>{formatDateTime(d.created_at)}</span>
+                <Btn size="sm" variant="secondary" onClick={() => viewDoc(d.id)}>Abrir</Btn>
+              </div>
+            ))}
+          </div>
+
+          {/* Acuerdo firmado */}
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: C.navy, marginBottom: 8 }}>Acuerdo firmado</div>
+            {!signed ? <div style={{ color: C.light, fontSize: 13 }}>No ha firmado el acuerdo.</div> : (
+              <>
+                <div style={{ fontSize: 12, lineHeight: 1.8, color: C.text }}>
+                  <b>{signed.full_name}</b>, {signed.title} · {signed.company_name}<br />
+                  Versión {signed.agreement_version} · {formatDateTime(signed.accepted_at)}<br />
+                  <span style={{ color: C.muted }}>IP {signed.ip_address || "—"} · {signed.user_agent || "—"}</span>
+                </div>
+                <Btn size="sm" variant="secondary" style={{ marginTop: 8 }} onClick={() => setShowAgreement(!showAgreement)}>
+                  {showAgreement ? "Ocultar texto" : "Ver texto firmado"}
+                </Btn>
+                {showAgreement && (
+                  <div style={{ marginTop: 10, background: C.bg, borderRadius: 10, padding: "12px 14px", fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 320, overflowY: "auto" }}>
+                    {signed.agreement_text}
+                  </div>
+                )}
+                {client.agreements.length > 1 && <div style={{ color: C.light, fontSize: 11, marginTop: 6 }}>También firmó {client.agreements.length - 1} versión(es) anterior(es).</div>}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ClientsTab() {
+  const [clients, setClients] = useState(null);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all"); // all | pending | active
+
+  const reload = useCallback(() => {
+    agentApi("/api/agent/clients").then(d => { setClients(d.clients); setError(""); }).catch(e => setError(e.message));
+  }, []);
+  useEffect(() => { reload(); }, [reload]);
+
+  async function setStatus(email, account_status) {
+    const r = await post("/api/agent/clients", { email, account_status });
+    setClients(list => list.map(c => (c.email === email ? { ...c, account_status: r.account_status } : c)));
+    if (account_status === "active" && r.notified !== "sent") {
+      window.alert("Línea activada. El correo al cliente no se envió (Resend todavía no está configurado), así que avísale tú.");
+    }
+  }
+
+  const list = (clients || []).filter(c => filter === "all" || (filter === "active" ? c.account_status === "active" : c.account_status !== "active"));
+  const pending = (clients || []).filter(c => c.account_status !== "active").length;
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontWeight: 900, fontSize: 18, color: C.navy }}>Clientes</div>
+          <div style={{ color: C.muted, fontSize: 13 }}>{clients ? `${clients.length} clientes · ${pending} pendientes de activar` : "Cargando..."}</div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {[["all", "Todos"], ["pending", "Pendientes"], ["active", "Activos"]].map(([id, label]) => (
+            <Btn key={id} size="sm" variant={filter === id ? "primary" : "secondary"} onClick={() => setFilter(id)}>{label}</Btn>
+          ))}
+          <Btn size="sm" variant="ghost" onClick={reload}>↻</Btn>
+        </div>
+      </div>
+      <ErrorText>{error}</ErrorText>
+      {clients && list.length === 0 && <Card style={{ padding: 20, color: C.light, fontSize: 13 }}>No hay clientes aquí.</Card>}
+      {list.map(c => <ClientCard key={c.email} client={c} onStatus={setStatus} />)}
+    </div>
+  );
+}
+
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, onLogout }) {
   const tabs = [
@@ -1053,6 +1224,7 @@ export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, on
     ...(me.isAdmin ? [
       { id: "companies", label: "🏢 Empresas", sub: "Números y documentos" },
       { id: "agents", label: "👥 Agentes", sub: "Acceso y líneas" },
+      { id: "clients", label: "🧾 Clientes", sub: "Onboarding y activación" },
     ] : []),
   ];
   const [tab, setTab] = useState("agent");
@@ -1111,6 +1283,7 @@ export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, on
         {tab === "notes" && <NotesTab />}
         {tab === "companies" && me.isAdmin && <CompaniesTab lines={lines} reloadLines={reloadLines} linesError={linesError} />}
         {tab === "agents" && me.isAdmin && <AgentsTab lines={lines} />}
+        {tab === "clients" && me.isAdmin && <ClientsTab />}
       </div>
     </div>
   );

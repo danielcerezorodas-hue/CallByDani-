@@ -5,8 +5,9 @@
 import { requireClient, fail } from "../helpers";
 
 export async function GET(req) {
-  const { supa, lines, error } = await requireClient(req);
+  const { supa, lines, active, error } = await requireClient(req);
   if (error) return error;
+  if (!active) return fail("Your line is not active yet", 403);
 
   const params = new URL(req.url).searchParams;
   const id = Number(params.get("call"));
