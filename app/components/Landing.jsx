@@ -100,7 +100,7 @@ const CONTACT = {
 
 const STEPS = [
   { n: "01", title: "Register online", desc: "Create your account and choose your plan in under 3 minutes." },
-  { n: "02", title: "Upload your documents", desc: "Policies, FAQs, price lists — AI trains your agents instantly." },
+  { n: "02", title: "Upload your documents", desc: "Policies, FAQs, price lists. We use them to train your agent during your free first week." },
   { n: "03", title: "Forward your number", desc: "One redirect and your calls go straight to your bilingual team." },
 ];
 
@@ -255,10 +255,10 @@ export default function LandingPage() {
             <span style={{ fontStyle: "italic", color: C.sky }}>Every single one.</span>
           </h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "clamp(15px, 2vw, 18px)", lineHeight: 1.7, maxWidth: 520, margin: "0 auto 44px" }}>
-            Real bilingual agents trained by AI on your business. Ready in minutes. No hiring, no training, no overhead.
+            Real bilingual agents trained on your business. Your first week, training included, is on us. No hiring, no overhead.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 60 }}>
-            <button onClick={() => window.location.href = "/pricing"} style={{ background: C.blue, color: C.white, border: "none", borderRadius: 12, padding: "15px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", boxShadow: `0 0 40px ${C.blue}40` }}>Start Free — 7 Days</button>
+            <button onClick={() => window.location.href = "/pricing"} style={{ background: C.blue, color: C.white, border: "none", borderRadius: 12, padding: "15px 36px", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif", boxShadow: `0 0 40px ${C.blue}40` }}>Your First Week Is On Us →</button>
             <button onClick={() => window.location.href = "/contact"} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "15px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>Talk to Sales</button>
           </div>
           <div style={{ display: "flex", gap: 32, justifyContent: "center", flexWrap: "wrap" }}>
@@ -415,7 +415,7 @@ export default function LandingPage() {
               { icon: "🤖", title: "AI Copilot", desc: "Agents get real-time suggestions based on your company policies during every call." },
               { icon: "📋", title: "Instant summaries", desc: "Every call ends with an AI-generated summary sent to your WhatsApp or email." },
               { icon: "🌎", title: "Bilingual EN/ES", desc: "Agents switch languages seamlessly. Your customers always feel at home." },
-              { icon: "⚡", title: "Ready in minutes", desc: "Upload your docs and your agents are trained instantly. No onboarding delays." },
+              { icon: "🎓", title: "Training included", desc: "We train your agent on your business during your first week, at no cost to you." },
               { icon: "📊", title: "Live dashboard", desc: "See every call, every summary, and every agent in real time from your portal." },
               { icon: "🔒", title: "Secure & compliant", desc: "Your data and your customers' data stay safe and private at all times." },
             ].map((f, i) => (
@@ -440,7 +440,7 @@ export default function LandingPage() {
             <div style={{ display: "flex", gap: 10, maxWidth: 440, margin: "0 auto", flexWrap: "wrap" }}>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com"
                 style={{ flex: 1, minWidth: 200, background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: "13px 16px", fontSize: 14, outline: "none", fontFamily: "inherit" }} />
-              <button onClick={handleSubmit} disabled={sending} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 10, padding: "13px 22px", fontWeight: 900, fontSize: 14, cursor: sending ? "not-allowed" : "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{sending ? "Sending..." : "Start Free →"}</button>
+              <button onClick={handleSubmit} disabled={sending} style={{ background: C.navy, color: C.white, border: "none", borderRadius: 10, padding: "13px 22px", fontWeight: 900, fontSize: 14, cursor: sending ? "not-allowed" : "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{sending ? "Sending..." : "Get Started →"}</button>
               {formError && <div style={{ width: "100%", color: "#dc2626", fontSize: 13, textAlign: "left" }}>⚠ {formError}</div>}
             </div>
           ) : (
@@ -448,7 +448,7 @@ export default function LandingPage() {
               <span style={{ color: C.green, fontWeight: 800 }}>✓ We'll be in touch within 24 hours!</span>
             </div>
           )}
-          <div style={{ color: C.light, fontSize: 12, marginTop: 14 }}>7-day free trial</div>
+          <div style={{ color: C.light, fontSize: 12, marginTop: 14 }}>First week free · Training included</div>
 
           {/* CONTACTO */}
           <div style={{ marginTop: 44, paddingTop: 32, borderTop: `1px solid ${C.border}` }}>

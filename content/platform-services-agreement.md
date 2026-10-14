@@ -1,7 +1,7 @@
-VERSION: 1.0
+VERSION: 1.1
 
 CALLBYDANI PLATFORM SERVICES AGREEMENT
-Version 1.0 — Effective as of the date Client accepts it
+Version 1.1 — Effective as of the date Client accepts it
 
 This Agreement is between CBD Business Solutions LLC, a North Carolina limited liability company doing business as CallByDani ("CallByDani"), and the business accepting it ("Client").
 
@@ -19,9 +19,9 @@ This Agreement is between CBD Business Solutions LLC, a North Carolina limited l
 
 7. NO PROFESSIONAL ADVICE. Agents and AI do not provide legal, medical, financial or other professional advice on Client's behalf. Client will not instruct them to do so.
 
-8. FEES AND TRIAL. Client agrees to pay the fees for its selected plan. Any free trial converts automatically to a paid subscription, including any setup fee, unless Client cancels before the trial ends. AI plans include the stated minutes; additional minutes are billed at the published rate. Fees are non-refundable except as required by law.
+8. FEES AND FREE FIRST WEEK. Client agrees to pay the fees for its selected plan. Any free first week, including training, converts automatically to a paid subscription, including any setup fee, unless Client cancels before the free first week ends. AI plans include the stated minutes; additional minutes are billed at the published rate. Fees are non-refundable except as required by law.
 
-9. CANCELLATION. Client may cancel by giving CallByDani at least 30 days' written notice (email is acceptable) before the end of its current billing period. Cancellation takes effect at the end of the billing period that follows the 30-day notice. Fees already paid are non-refundable and are not prorated. During a free trial, Client may cancel at any time before the trial ends without charge. CallByDani may suspend or terminate Services for non-payment or violation of this Agreement.
+9. CANCELLATION. Client may cancel by giving CallByDani at least 30 days' written notice (email is acceptable) before the end of its current billing period. Cancellation takes effect at the end of the billing period that follows the 30-day notice. Fees already paid are non-refundable and are not prorated. During the free first week, Client may cancel at any time before it ends without charge. CallByDani may suspend or terminate Services for non-payment or violation of this Agreement.
 
 10. CONFIDENTIALITY AND DATA. Each party will protect the other's confidential information. CallByDani will use Client and caller data only to provide the Services and will not sell it. Client owns its customer data.
 

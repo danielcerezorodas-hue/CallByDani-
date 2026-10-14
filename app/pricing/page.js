@@ -80,12 +80,12 @@ const FAQ = [
     a: "Yes. Your agent is a real, bilingual person dedicated to your business, supported by an AI copilot that knows your business inside and out.",
   },
   {
-    q: "How does the free week work?",
-    a: "Your first 7 days are free with no obligation to continue. We use that week to train your agent on your business. If you decide to stay, you pay a one-time setup fee plus your first month.",
+    q: "How does the free first week work?",
+    a: "Your first 7 days are on us, with no obligation to continue. That week your agent starts answering your calls while we train them on your business, and you don't pay anything for the training. If you decide to stay, you pay a one-time setup fee plus your first month.",
   },
   {
-    q: "How does billing work with the free trial?",
-    a: "You'll add a card when you sign up, but you won't be charged anything during your 7-day free trial. If you decide it's not for you, just let us know before the trial ends and you'll never be charged. If you stay, your first month and the one-time setup fee are charged on day 8, and your dedicated agent is assigned to your business, already trained during your trial week. After that, you're billed monthly.",
+    q: "How does billing work with the free first week?",
+    a: "You'll add a card when you sign up, but you won't be charged anything during your free first week. If you decide it's not for you, just let us know before day 8 and you'll never be charged. If you stay, your first month and the one-time setup fee are charged on day 8, and your dedicated agent is assigned to your business, already trained during your first week. After that, you're billed monthly.",
   },
   {
     q: "Can I add more agents later?",
@@ -347,7 +347,7 @@ export default function PricingPage() {
             </button>
           </div>
           {checkoutError && <div style={{ color: "#f87171", fontSize: 13, marginTop: 10 }}>⚠ {checkoutError}</div>}
-          <div style={{ color: C.light, fontSize: 12, marginTop: 18 }}>7 days free · Nothing charged until day 8 · Add agents anytime</div>
+          <div style={{ color: C.light, fontSize: 12, marginTop: 18 }}>First week on us · Training included · Nothing charged until day 8</div>
         </div>
       </section>
 
@@ -383,7 +383,7 @@ export default function PricingPage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16 }}>
             {[
-              { n: "01", title: "Free week", desc: "Your agent starts answering your calls for 7 days, free. We use this week to train them on your business." },
+              { n: "01", title: "Free training week", desc: "Your agent starts answering your calls for 7 days, on us. We use this week to train them on your business." },
               { n: "02", title: "Setup & first month", desc: "Happy with the results? Pay a one-time setup fee and your first month to keep your agent." },
               { n: "03", title: "Grow your team", desc: "Add agents as your business grows. Your price per agent drops automatically." },
             ].map((s, i) => (
