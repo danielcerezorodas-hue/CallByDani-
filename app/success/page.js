@@ -22,6 +22,12 @@ const MESSAGES = {
     text: "Your subscription is active. Your dedicated bilingual agents are being briefed on your business right now.",
     steps: ["Upload your company documents", "Set your business hours", "Forward your phone number to us"],
   },
+  trial: {
+    icon: "🎉",
+    title: "Your free week has started!",
+    text: "You won't be charged anything for the next 7 days. Your agent is getting to know your business, and if you decide to stay, your first month and setup fee are charged on day 8.",
+    steps: ["Upload your company documents", "Set your business hours", "Forward your phone number to us"],
+  },
 };
 
 const input = {
@@ -49,6 +55,7 @@ export default function SuccessPage() {
     const q = new URLSearchParams(window.location.search);
     const p = q.get("plan");
     if (p && MESSAGES[p]) setPlan(p);
+    else if (q.get("trial")) setPlan("trial");
     const sid = q.get("session_id") || "";
     setSessionId(sid);
     if (!sid) { setAccount("missing"); return; }

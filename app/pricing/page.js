@@ -84,6 +84,10 @@ const FAQ = [
     a: "Your first 7 days are free with no obligation to continue. We use that week to train your agent on your business. If you decide to stay, you pay a one-time setup fee plus your first month.",
   },
   {
+    q: "How does billing work with the free trial?",
+    a: "You'll add a card when you sign up, but you won't be charged anything during your 7-day free trial. If you decide it's not for you, just let us know before the trial ends and you'll never be charged. If you stay, your first month and the one-time setup fee are charged on day 8, and your dedicated agent is assigned to your business, already trained during your trial week. After that, you're billed monthly.",
+  },
+  {
     q: "Can I add more agents later?",
     a: "Yes. Start with one agent and add more whenever your call volume grows. Your price per agent drops automatically when you reach the next tier.",
   },
@@ -114,22 +118,22 @@ export default function PricingPage() {
     setAgents(a => Math.min(MAX_AGENTS, Math.max(1, a + delta)));
   }
 
-  // "Start my free week": manda al formulario de contacto con el número de agentes
+  // "Start my free week": manda a Stripe con la semana gratis (pide tarjeta, cobra el día 8)
   function startTrial() {
-    window.location.href = `/contact?agents=${agents}`;
+    subscribeNow(agents, "trial", true);
   }
 
   // "Subscribe now": manda a Stripe con la cantidad de agentes
   // Manda a Stripe con la cantidad de agentes elegida.
   // "key" identifica qué botón se presionó (para mostrar "Loading...").
-  async function subscribeNow(quantity = agents, key = "calc") {
+  async function subscribeNow(quantity = agents, key = "calc", trial = false) {
     setLoading(key);
     setCheckoutError("");
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agents: quantity }),
+        body: JSON.stringify({ agents: quantity, trial }),
       });
       const data = await res.json();
       if (data.url) {
@@ -327,12 +331,12 @@ export default function PricingPage() {
             {agents >= 5 && <>Enough agents for 24/7 coverage.</>}
           </div>
 
-          <button onClick={startTrial} style={{
+          <button onClick={startTrial} disabled={loading !== null} style={{
             width: "100%", maxWidth: 420, background: C.blue, color: C.white, border: "none", borderRadius: 12,
-            padding: "16px 0", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "'Playfair Display', serif",
+            padding: "16px 0", fontWeight: 900, fontSize: 16, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Playfair Display', serif",
             boxShadow: `0 0 40px ${C.blue}40`,
           }}>
-            Start My Free Week →
+            {loading === "trial" ? "Loading..." : "Start My Free Week →"}
           </button>
           <div style={{ marginTop: 14 }}>
             <button onClick={() => subscribeNow(agents, "calc")} disabled={loading !== null} style={{
@@ -343,7 +347,7 @@ export default function PricingPage() {
             </button>
           </div>
           {checkoutError && <div style={{ color: "#f87171", fontSize: 13, marginTop: 10 }}>⚠ {checkoutError}</div>}
-          <div style={{ color: C.light, fontSize: 12, marginTop: 18 }}>7 days free · No obligation to continue · Add agents anytime</div>
+          <div style={{ color: C.light, fontSize: 12, marginTop: 18 }}>7 days free · Nothing charged until day 8 · Add agents anytime</div>
         </div>
       </section>
 

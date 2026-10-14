@@ -1,19 +1,14 @@
 import Stripe from 'stripe';
+import { AGENT_PRICE_ID, SETUP_FEE_PRICE_ID, AI_RECEPTIONIST_PRICE_ID } from '../stripe/prices';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Precio "Agente" en Stripe (con precios por volumen: 1 = $1,997, 2-3 = $1,697, 4+ = $1,550).
-// Pega aquí el ID del precio que creaste en Stripe (empieza con "price_").
-const AGENT_PRICE_ID = 'price_1UKWTgJxvEA4yBLNsPIARcH0';
-
-// Plan "AI Receptionist" ($197/mes, precio fijo, cantidad 1)
-const AI_RECEPTIONIST_PRICE_ID = 'price_1UPD6DJxvEA4yBLNVyyOgbqP';
-
 const MAX_AGENTS = 20;
+const TRIAL_DAYS = 7;
 
 export async function POST(req) {
   try {
-    const { agents, email, plan } = await req.json();
+    const { agents, email, plan, trial } = await req.json();
 
     if (plan === 'ai_receptionist') {
       const session = await stripe.checkout.sessions.create({
@@ -33,10 +28,37 @@ export async function POST(req) {
       return Response.json({ error: 'Invalid number of agents' }, { status: 400 });
     }
 
+    // Semana gratis: se pide la tarjeta pero no se cobra nada hasta el día 8.
+    // La tarifa de instalación no va en line_items (Stripe la cobraría hoy); la agrega el webhook.
+    if (trial) {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        ...(email ? { customer_email: email } : {}),
+        line_items: [{ price: AGENT_PRICE_ID, quantity }],
+        payment_method_collection: 'always',
+        subscription_data: {
+          trial_period_days: TRIAL_DAYS,
+          trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
+          metadata: { agents: String(quantity), setup_fee: 'on_trial_end' },
+        },
+        custom_text: {
+          submit: { message: `You won't be charged today. If you stay after your ${TRIAL_DAYS}-day free trial, your first month and the one-time setup fee are charged on day ${TRIAL_DAYS + 1}.` },
+        },
+        metadata: { agents: String(quantity), trial: 'true', setup_fee: 'on_trial_end' },
+        success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}&trial=1`,
+        cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
+      });
+      return Response.json({ url: session.url });
+    }
+
+    // "Subscribe now": tarifa de instalación + primer mes, cobrados hoy.
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       ...(email ? { customer_email: email } : {}),
-      line_items: [{ price: AGENT_PRICE_ID, quantity }],
+      line_items: [
+        { price: AGENT_PRICE_ID, quantity },
+        { price: SETUP_FEE_PRICE_ID, quantity },
+      ],
       metadata: { agents: String(quantity) },
       success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
