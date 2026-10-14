@@ -448,7 +448,7 @@ export default function LandingPage() {
               <span style={{ color: C.green, fontWeight: 800 }}>✓ We'll be in touch within 24 hours!</span>
             </div>
           )}
-          <div style={{ color: C.light, fontSize: 12, marginTop: 14 }}>No credit card required · 7-day free trial · Cancel anytime</div>
+          <div style={{ color: C.light, fontSize: 12, marginTop: 14 }}>No credit card required · 7-day free trial</div>
 
           {/* CONTACTO */}
           <div style={{ marginTop: 44, paddingTop: 32, borderTop: `1px solid ${C.border}` }}>

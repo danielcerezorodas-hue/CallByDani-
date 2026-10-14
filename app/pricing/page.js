@@ -87,6 +87,10 @@ const FAQ = [
     q: "Can I add more agents later?",
     a: "Yes. Start with one agent and add more whenever your call volume grows. Your price per agent drops automatically when you reach the next tier.",
   },
+  {
+    q: "How does cancellation work?",
+    a: "There's no long-term contract. Plans with dedicated agents end at the close of a billing month, and we need at least 30 days' notice. For example, if your billing month ends on June 30, let us know by May 31 and your last month of service will be June. The AI Receptionist plan can be canceled anytime and stays active until the end of your current billing month.",
+  },
 ];
 
 export default function PricingPage() {
