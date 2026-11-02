@@ -5,6 +5,9 @@ import { agentApi, post } from "./agentApi";
 import { supabase } from "../supabase";
 import { SECTIONS, planLabel } from "../dashboard/onboardingFields";
 import SalesTab from "./sales/SalesTab";
+import { useCallFollowUp } from "./sales/FollowUpBox";
+import { scheduleFromCall } from "./sales/followup";
+import { fmtDateTime } from "./sales/constants";
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
 const C = {
@@ -513,11 +516,15 @@ function CallNote({ liveCall, line, onFinishCall }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null); // respuesta de /api/agent/note
+  const [followUp, setFollowUp] = useState(null); // { ok, text } del seguimiento agendado
+  const fu = useCallFollowUp(`${form.reason}
+${form.note}`, liveCall.callSid);
 
   // Nueva llamada → nota limpia con el teléfono de quien llama
   useEffect(() => {
     setForm({ ...emptyNote, callerName: liveCall.aiName || "", callerPhone: liveCall.from || "", reason: liveCall.aiReason || "", sendWhatsapp: true });
     setResult(null);
+    setFollowUp(null);
     setError("");
   }, [liveCall.callSid]);
 
@@ -530,6 +537,14 @@ function CallNote({ liveCall, line, onFinishCall }) {
     setSaving(true); setError("");
     try {
       const res = await post("/api/agent/note", { callSid: liveCall.callSid, ...form, sendWhatsapp: form.sendWhatsapp && !!line?.owner_whatsapp });
+      if (fu.enabled) {
+        try {
+          await scheduleFromCall({ phone: form.callerPhone, name: form.callerName, reason: form.reason, note: form.note, line: line?.phone_number || liveCall.to, type: fu.type, at: fu.at });
+          setFollowUp({ ok: true, text: `Seguimiento agendado: ${fmtDateTime(new Date(fu.at).toISOString())}` });
+        } catch (e) {
+          setFollowUp({ ok: false, text: `La nota se guardó, pero no se pudo agendar el seguimiento: ${e.message}` });
+        }
+      }
       setResult(res);
     } catch (e) { setError(e.message); }
     setSaving(false);
@@ -547,6 +562,7 @@ function CallNote({ liveCall, line, onFinishCall }) {
           {result.whatsapp_status === "failed" && <span style={{ color: C.red }}>No se pudo mandar el WhatsApp: {result.whatsapp_error}</span>}
           {result.whatsapp_status === "skipped" && "No se mandó WhatsApp."}
         </div>
+        {followUp && <div style={{ fontSize: 13, marginTop: 6, color: followUp.ok ? C.green : C.red, fontWeight: 700 }}>📅 {followUp.text}</div>}
         {!liveCall.ended && <div style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>Quedarás libre en cuanto termine la llamada.</div>}
       </Card>
     );
@@ -571,6 +587,7 @@ function CallNote({ liveCall, line, onFinishCall }) {
           placeholder="Detalles: dirección, horario preferido, qué se le prometió..."
           style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }} />
       </Field>
+      {fu.ui}
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.red, fontWeight: 700, marginBottom: 8, cursor: "pointer" }}>
         <input type="checkbox" checked={form.urgent} onChange={set("urgent")} /> Urgente
       </label>
@@ -797,13 +814,24 @@ function NoteEditor({ call, line, onSaved, onCancel }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const set = key => e => setForm(f => ({ ...f, [key]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
+  const fu = useCallFollowUp(`${form.reason}
+${form.note}`, call.call_sid);
 
   async function save() {
     setSaving(true); setError("");
     try {
       await post("/api/agent/note", { callSid: call.call_sid, ...form, sendWhatsapp: form.sendWhatsapp && canWhatsapp });
-      onSaved();
-    } catch (e) { setError(e.message); setSaving(false); }
+    } catch (e) { setError(e.message); setSaving(false); return; }
+    if (fu.enabled) {
+      try {
+        await scheduleFromCall({ phone: form.callerPhone, name: form.callerName, reason: form.reason, note: form.note, line: call.to_number, type: fu.type, at: fu.at });
+      } catch (e) {
+        setError(`La nota se guardó, pero no se pudo agendar el seguimiento: ${e.message}`);
+        setSaving(false);
+        return;
+      }
+    }
+    onSaved();
   }
 
   return (
@@ -817,6 +845,7 @@ function NoteEditor({ call, line, onSaved, onCancel }) {
         <textarea value={form.note} onChange={set("note")} rows={3} placeholder="Detalles, qué se le prometió, si hay que devolver la llamada..."
           style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }} />
       </Field>
+      {fu.ui}
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.red, fontWeight: 700, cursor: "pointer" }}>
           <input type="checkbox" checked={form.urgent} onChange={set("urgent")} /> Urgente

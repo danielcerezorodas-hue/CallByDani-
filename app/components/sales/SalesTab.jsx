@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "../../supabase";
 import { agentApi } from "../agentApi";
 import Calendar from "./Calendar";
+import { useFollowUpSuggestion, fmtSuggestion } from "./followup";
 import {
   STAGES, STAGE, EVENT_TYPES, EVENT_TYPE, CONTACT_TYPES, CONTACT_TYPE, INTERNAL_COMPANY,
   isOverdue, addDays, toLocalInput, fmtDateTime, fmtDate, fmtPhone, toE164,
@@ -158,6 +159,18 @@ function LogContact({ prospect, myId, onDone }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  // Si el agente ya eligió el siguiente paso a mano, la IA no lo cambia
+  const [touched, setTouched] = useState(false);
+  const setNext = (k, v) => { setTouched(true); set(k, v); };
+
+  // La IA lee la nota ("llamar el martes a las 3") y propone el siguiente paso
+  const { suggestion, loading: detecting } = useFollowUpSuggestion(f.body);
+  const [applied, setApplied] = useState(null);
+  useEffect(() => {
+    if (!suggestion || touched) return;
+    setF(x => ({ ...x, next: true, next_type: suggestion.type, next_at: suggestion.local_datetime, next_note: x.next_note || suggestion.summary }));
+    setApplied(suggestion);
+  }, [suggestion, touched]);
 
   async function save() {
     if (f.next && !f.next_at) { setError("Choose a date for the next step, or uncheck it"); return; }
@@ -212,18 +225,24 @@ function LogContact({ prospect, myId, onDone }) {
 
       <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
         <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 700, color: C.navy, cursor: "pointer" }}>
-          <input type="checkbox" checked={f.next} onChange={e => set("next", e.target.checked)} /> Schedule the next step
+          <input type="checkbox" checked={f.next} onChange={e => setNext("next", e.target.checked)} /> Schedule the next step
+          {detecting && <span style={{ color: C.light, fontWeight: 500, fontSize: 12 }}>✨ reading your note...</span>}
         </label>
         {f.next && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginTop: 8 }}>
             <div>
               <Label>NEXT STEP</Label>
-              <select value={f.next_type} onChange={e => set("next_type", e.target.value)} style={input}>
+              <select value={f.next_type} onChange={e => setNext("next_type", e.target.value)} style={input}>
                 {EVENT_TYPES.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
               </select>
             </div>
-            <div><Label>DATE & TIME</Label><input type="datetime-local" value={f.next_at} onChange={e => set("next_at", e.target.value)} style={input} /></div>
-            <div style={{ gridColumn: "1 / -1" }}><Label>DETAILS (OPTIONAL)</Label><input value={f.next_note} onChange={e => set("next_note", e.target.value)} style={input} /></div>
+            <div><Label>DATE & TIME</Label><input type="datetime-local" value={f.next_at} onChange={e => setNext("next_at", e.target.value)} style={input} /></div>
+            <div style={{ gridColumn: "1 / -1" }}><Label>DETAILS (OPTIONAL)</Label><input value={f.next_note} onChange={e => setNext("next_note", e.target.value)} style={input} /></div>
+            {applied && !touched && (
+              <div style={{ gridColumn: "1 / -1", background: C.blueDim, color: C.blue, borderRadius: 8, padding: "7px 10px", fontSize: 12, fontWeight: 600 }}>
+                ✨ AI picked this from your note: {EVENT_TYPE[applied.type]?.label} · {fmtSuggestion(applied.local_datetime)}. Change it if it's not right.
+              </div>
+            )}
           </div>
         )}
       </div>
