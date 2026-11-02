@@ -21,6 +21,7 @@ export async function POST(req) {
     // Semana gratis: deja la tarifa de instalación pendiente en la suscripción,
     // así Stripe la cobra en la primera factura real (día 8), junto con el primer mes.
     if (session.metadata?.setup_fee === "on_trial_end" && session.subscription) {
+      if (!SETUP_FEE_PRICE_ID) return new Response("Falta STRIPE_SETUP_FEE_PRICE_ID", { status: 500 }); // Stripe reintenta
       const agents = Number.parseInt(session.metadata.agents, 10) || 1;
       try {
         await stripe.invoiceItems.create(
