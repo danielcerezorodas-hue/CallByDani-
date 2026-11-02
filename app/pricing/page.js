@@ -348,6 +348,9 @@ export default function PricingPage() {
           </div>
           {checkoutError && <div style={{ color: "#f87171", fontSize: 13, marginTop: 10 }}>⚠ {checkoutError}</div>}
           <div style={{ color: C.light, fontSize: 12, marginTop: 18 }}>First week on us · Training included · Nothing charged until day 8</div>
+          <div style={{ color: C.light, fontSize: 11, marginTop: 8 }}>
+            By continuing you agree to our <a href="/terms" style={{ color: C.sky }}>Terms</a> and <a href="/privacy" style={{ color: C.sky }}>Privacy Policy</a>.
+          </div>
         </div>
       </section>
 
@@ -450,6 +453,10 @@ export default function PricingPage() {
       {/* FOOTER */}
       <footer style={{ background: C.navyDark, padding: "28px 24px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 12 }}>
         © 2026 CallByDani · All rights reserved
+        <div style={{ marginTop: 8, display: "flex", gap: 18, justifyContent: "center" }}>
+          <a href="/privacy" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>Privacy</a>
+          <a href="/terms" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>Terms</a>
+        </div>
       </footer>
     </div>
   );

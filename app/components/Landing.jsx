@@ -21,7 +21,8 @@ const C = {
   green: "#22c55e",
   greenDim: "#22c55e15",
   gold: "#f59e0b",
-  pumpkin: "#f97316",
+  xmasRed: "#dc2626",
+  xmasGreen: "#16a34a",
 };
 
 const STATS = [
@@ -113,11 +114,11 @@ export default function LandingPage() {
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
   const [isMobile, setIsMobile] = useState(false);
-  // Decoración de Halloween: solo en octubre (o con ?halloween=1 para verla en cualquier fecha)
-  const [halloween, setHalloween] = useState(false);
+  // Decoración de Navidad: noviembre y diciembre (o con ?christmas=1 para verla en cualquier fecha)
+  const [christmas, setChristmas] = useState(false);
   useEffect(() => {
-    const forced = new URLSearchParams(window.location.search).get("halloween") === "1";
-    setHalloween(forced || new Date().getMonth() === 9);
+    const forced = new URLSearchParams(window.location.search).get("christmas") === "1";
+    setChristmas(forced || [10, 11].includes(new Date().getMonth()));
   }, []);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -164,12 +165,14 @@ export default function LandingPage() {
     .desktop-nav { display: none !important; }
     .mobile-only { display: flex !important; }
   }
-  @keyframes batFly { 0% { transform: translate(0, 0) scale(1); } 25% { transform: translate(30vw, -6vh) scale(0.9); } 50% { transform: translate(60vw, 4vh) scale(1.05); } 75% { transform: translate(85vw, -4vh) scale(0.9); } 100% { transform: translate(115vw, 2vh) scale(1); } }
-  @keyframes ghostFloat { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-18px) rotate(4deg); } }
-  @keyframes pumpkinGlow { 0%, 100% { filter: drop-shadow(0 0 10px #f9731680); } 50% { filter: drop-shadow(0 0 22px #f97316cc); } }
-  .hw-deco { position: absolute; pointer-events: none; user-select: none; line-height: 1; }
-  @media (prefers-reduced-motion: reduce) { .hw-deco { animation: none !important; } }
-  @media (max-width: 480px) { .hw-hide-sm { display: none; } }
+  @keyframes snowFall { 0% { transform: translate(0, -10vh) rotate(0deg); } 100% { transform: translate(6vw, 110vh) rotate(360deg); } }
+  @keyframes sleighFly { 0% { transform: translate(0, 0) rotate(4deg); } 30% { transform: translate(40vw, -5vh) rotate(2deg); } 60% { transform: translate(80vw, 2vh) rotate(6deg); } 100% { transform: translate(135vw, -6vh) rotate(3deg); } }
+  @keyframes lightBlink { 0%, 100% { opacity: 1; filter: brightness(1.2); } 50% { opacity: 0.35; filter: brightness(0.7); } }
+  @keyframes treeGlow { 0%, 100% { filter: drop-shadow(0 0 8px #facc1560); } 50% { filter: drop-shadow(0 0 20px #facc15aa); } }
+  @keyframes giftHop { 0%, 85%, 100% { transform: translateY(0) rotate(0deg); } 90% { transform: translateY(-14px) rotate(-8deg); } 95% { transform: translateY(0) rotate(6deg); } }
+  .xmas-deco { position: absolute; pointer-events: none; user-select: none; line-height: 1; }
+  @media (prefers-reduced-motion: reduce) { .xmas-deco, .xmas-light { animation: none !important; } }
+  @media (max-width: 480px) { .xmas-hide-sm { display: none; } }
 `}</style>
 
       {/* NAVBAR */}
@@ -223,26 +226,42 @@ export default function LandingPage() {
       <section style={{ background: `linear-gradient(160deg, ${C.navyDark} 0%, ${C.navyLight} 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 24px 80px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "10%", right: "-5%", width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle, ${C.blue}20, transparent 70%)`, filter: "blur(60px)" }} />
 
-        {/* HALLOWEEN: decoración (no tapa ni bloquea nada) */}
-        {halloween && (
+        {/* NAVIDAD: decoración (no tapa ni bloquea nada) */}
+        {christmas && (
           <div aria-hidden="true">
-            <div style={{ position: "absolute", bottom: "-10%", left: "-8%", width: 420, height: 420, borderRadius: "50%", background: `radial-gradient(circle, ${C.pumpkin}30, transparent 70%)`, filter: "blur(70px)", pointerEvents: "none" }} />
-            <div className="hw-deco" style={{ top: "6%", right: "8%", fontSize: "clamp(40px, 6vw, 72px)", opacity: 0.9 }}>🌕</div>
-            {[{ top: "16%", delay: "0s", dur: "14s", size: 28 }, { top: "24%", delay: "4s", dur: "17s", size: 22 }, { top: "11%", delay: "8s", dur: "12s", size: 18 }].map((b, i) => (
-              <div key={i} className="hw-deco" style={{ top: b.top, left: "-10vw", fontSize: b.size, opacity: 0.85, animation: `batFly ${b.dur} linear ${b.delay} infinite` }}>🦇</div>
+            {/* Luces de colores arriba del hero */}
+            <div style={{ position: "absolute", top: 68, left: 0, right: 0, display: "flex", justifyContent: "space-around", pointerEvents: "none", padding: "0 8px" }}>
+              {Array.from({ length: 18 }).map((_, i) => (
+                <span key={i} className={i % 3 === 2 ? "xmas-light xmas-hide-sm" : "xmas-light"} style={{
+                  width: 10, height: 14, borderRadius: "50% 50% 45% 45%", marginTop: i % 2 ? 10 : 2,
+                  background: ["#ef4444", "#22c55e", "#facc15", "#38bdf8"][i % 4],
+                  boxShadow: `0 0 12px ${["#ef4444", "#22c55e", "#facc15", "#38bdf8"][i % 4]}`,
+                  animation: `lightBlink 1.6s ease-in-out ${(i % 4) * 0.4}s infinite`,
+                }} />
+              ))}
+            </div>
+            {/* Nieve */}
+            {Array.from({ length: 16 }).map((_, i) => (
+              <div key={i} className={i > 9 ? "xmas-deco xmas-hide-sm" : "xmas-deco"} style={{
+                top: 0, left: `${(i * 6.3 + 2) % 100}%`, fontSize: 10 + (i % 4) * 5, color: "#fff", opacity: 0.55 + (i % 3) * 0.15,
+                animation: `snowFall ${9 + (i % 5) * 2}s linear ${-(i * 1.3)}s infinite`,
+              }}>❄</div>
             ))}
-            <div className="hw-deco hw-hide-sm" style={{ top: "34%", left: "6%", fontSize: "clamp(34px, 5vw, 56px)", opacity: 0.75, animation: "ghostFloat 4s ease-in-out infinite" }}>👻</div>
-            <div className="hw-deco" style={{ bottom: "6%", left: "5%", fontSize: "clamp(40px, 6vw, 64px)", animation: "pumpkinGlow 2.5s ease-in-out infinite" }}>🎃</div>
-            <div className="hw-deco" style={{ bottom: "8%", right: "6%", fontSize: "clamp(32px, 5vw, 52px)", animation: "pumpkinGlow 3s ease-in-out 0.8s infinite" }}>🎃</div>
-            <div className="hw-deco" style={{ top: 64, left: 0, fontSize: "clamp(48px, 7vw, 84px)", opacity: 0.35 }}>🕸️</div>
+            {/* Santa en su trineo cruzando el cielo */}
+            <div className="xmas-deco" style={{ top: "15%", left: "-25vw", fontSize: "clamp(26px, 4vw, 40px)", whiteSpace: "nowrap", animation: "sleighFly 16s linear 2s infinite" }}>🎅🛷🦌🦌</div>
+            <div className="xmas-deco" style={{ top: "6%", right: "8%", fontSize: "clamp(34px, 5vw, 56px)", opacity: 0.9 }}>⭐</div>
+            <div className="xmas-deco" style={{ bottom: "5%", left: "4%", fontSize: "clamp(52px, 8vw, 92px)", animation: "treeGlow 3s ease-in-out infinite" }}>🎄</div>
+            <div className="xmas-deco" style={{ bottom: "6%", left: "calc(4% + clamp(50px, 7vw, 84px))", fontSize: "clamp(24px, 3.5vw, 38px)", animation: "giftHop 4s ease-in-out infinite" }}>🎁</div>
+            <div className="xmas-deco xmas-hide-sm" style={{ bottom: "7%", right: "6%", fontSize: "clamp(40px, 6vw, 64px)" }}>⛄</div>
+            <div className="xmas-deco" style={{ bottom: "6%", right: "calc(6% + clamp(42px, 6vw, 66px))", fontSize: "clamp(22px, 3vw, 34px)", animation: "giftHop 4s ease-in-out 1.5s infinite" }}>🎁</div>
           </div>
         )}
 
         <div style={{ maxWidth: 780, margin: "0 auto", textAlign: "center", position: "relative" }}>
-          {halloween ? (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `${C.pumpkin}26`, border: `1px solid ${C.pumpkin}66`, borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
-              <span style={{ fontSize: 14 }}>🎃</span>
-              <span style={{ color: "#fdba74", fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>HAPPY HALLOWEEN · BILINGUAL CALL CENTER</span>
+          {christmas ? (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `${C.xmasRed}26`, border: `1px solid ${C.xmasRed}66`, borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
+              <span style={{ fontSize: 14 }}>🎄</span>
+              <span style={{ color: "#fca5a5", fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>MERRY CHRISTMAS · FELIZ NAVIDAD</span>
             </div>
           ) : (
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.3)", borderRadius: 20, padding: "6px 18px", marginBottom: 28 }}>
@@ -272,23 +291,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* HALLOWEEN: franja */}
-      {halloween && (
-        <section id="halloween" style={{ background: `linear-gradient(90deg, #7c2d12, ${C.pumpkin} 50%, #7c2d12)`, padding: "22px 24px" }}>
+      {/* NAVIDAD: franja */}
+      {christmas && (
+        <section id="christmas" style={{ background: `repeating-linear-gradient(135deg, ${C.xmasRed} 0 22px, #b91c1c 22px 44px)`, padding: "22px 24px", borderTop: `4px solid ${C.xmasGreen}`, borderBottom: `4px solid ${C.xmasGreen}` }}>
           <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px 20px", flexWrap: "wrap", textAlign: "center" }}>
-            <span aria-hidden="true" style={{ fontSize: 26 }}>👻</span>
+            <span aria-hidden="true" style={{ fontSize: 28 }}>🎅</span>
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(18px, 2.6vw, 24px)", fontWeight: 900, color: C.white }}>
-                Don't let missed calls haunt your business.
+                Give your business the gift of never missing a call.
               </div>
-              <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, marginTop: 2 }}>
-                Every call answered in English & Spanish — no tricks, just treats for your customers. 🍬
+              <div style={{ color: "rgba(255,255,255,0.9)", fontSize: 14, marginTop: 2 }}>
+                We answer in English & Spanish while you're busy wrapping presents. 🎁
               </div>
             </div>
             <button onClick={() => window.location.href = "/pricing"} style={{
-              background: C.navyDark, color: C.white, border: "none", borderRadius: 10, padding: "11px 22px",
+              background: C.xmasGreen, color: C.white, border: "2px solid #fff", borderRadius: 10, padding: "11px 22px",
               fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-            }}>Get Started →</button>
+            }}>Unwrap Your Free Week →</button>
           </div>
         </section>
       )}
@@ -484,7 +503,7 @@ export default function LandingPage() {
           <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>© 2026 CallByDani · All rights reserved</div>
           <div style={{ display: "flex", gap: 20 }}>
             {["Privacy", "Terms", "Contact"].map(l => (
-              <a key={l} href={l === "Contact" ? "/contact" : "#"} style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, textDecoration: "none" }}>{l}</a>
+              <a key={l} href={`/${l.toLowerCase()}`} style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, textDecoration: "none" }}>{l}</a>
             ))}
           </div>
         </div>

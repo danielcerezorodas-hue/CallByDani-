@@ -1,5 +1,4 @@
 import Stripe from 'stripe';
-import { isLaunched } from '../../launch';
 import { AGENT_PRICE_ID, SETUP_FEE_PRICE_ID, SETUP_FEE_PER_AGENT, AI_RECEPTIONIST_PRICE_ID, missingPriceEnv } from '../stripe/prices';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -8,8 +7,6 @@ const MAX_AGENTS = 20;
 const TRIAL_DAYS = 7;
 
 export async function POST(req) {
-  // Antes de la apertura oficial no se puede pagar
-  if (!isLaunched()) return Response.json({ error: "We open on October 24. See you soon!" }, { status: 403 });
   const missing = missingPriceEnv();
   if (missing) return Response.json({ error: `Payments are not configured yet (missing ${missing})` }, { status: 500 });
   try {

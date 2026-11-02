@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, Fragment } from "react";
 import { agentApi, post } from "./agentApi";
 import { supabase } from "../supabase";
 import { SECTIONS, planLabel } from "../dashboard/onboardingFields";
+import SalesTab from "./sales/SalesTab";
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
 const C = {
@@ -1221,6 +1222,7 @@ export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, on
     { id: "agent", label: "🎧 Llamada", sub: "Asistente y nota" },
     { id: "calls", label: "📋 Registro", sub: "Historial" },
     { id: "notes", label: "🗒️ Mis notas", sub: "Bloc personal" },
+    { id: "sales", label: "💼 Sales", sub: "Prospects & calendar" },
     ...(me.isAdmin ? [
       { id: "companies", label: "🏢 Empresas", sub: "Números y documentos" },
       { id: "agents", label: "👥 Agentes", sub: "Acceso y líneas" },
@@ -1281,6 +1283,7 @@ export default function AgentPanel({ me, liveCall, ringingHere, onFinishCall, on
         {tab === "agent" && <AgentTab lines={lines} liveCall={liveCall} onFinishCall={onFinishCall} />}
         {tab === "calls" && <CallLogTab isAdmin={me.isAdmin} lines={lines} />}
         {tab === "notes" && <NotesTab />}
+        {tab === "sales" && <SalesTab me={me} />}
         {tab === "companies" && me.isAdmin && <CompaniesTab lines={lines} reloadLines={reloadLines} linesError={linesError} />}
         {tab === "agents" && me.isAdmin && <AgentsTab lines={lines} />}
         {tab === "clients" && me.isAdmin && <ClientsTab />}

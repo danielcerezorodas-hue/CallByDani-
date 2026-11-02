@@ -87,6 +87,23 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
   const wrapUpRef = useRef(wrapUp);
   useEffect(() => { wrapUpRef.current = wrapUp; }, [wrapUp]);
 
+  // Botón "Call" de un prospecto (pestaña Sales): window.dispatchEvent(new CustomEvent("cbd:dial", { detail: { to, line } }))
+  const callOutRef = useRef(null);
+  callOutRef.current = callOut;
+  useEffect(() => {
+    function onDial(e) {
+      const { to, line } = e.detail || {};
+      if (!deviceRef.current) {
+        setDialTo(to || "");
+        setError("Connect the phone first (Conectar), then press Llamar.");
+        return;
+      }
+      callOutRef.current(to, line);
+    }
+    window.addEventListener("cbd:dial", onDial);
+    return () => window.removeEventListener("cbd:dial", onDial);
+  }, []);
+
   useEffect(() => {
     onIncoming?.(incoming ? { callSid: param(incoming, "parentCallSid"), accept, reject } : null);
   }, [incoming]);
@@ -202,17 +219,19 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
   }
 
   // Llamada saliente desde el marcador
-  async function callOut() {
-    const to = toE164(dialTo);
+  // toOverride/lineOverride: cuando la llamada viene del botón "Call" de un prospecto (evento "cbd:dial")
+  async function callOut(toOverride, lineOverride) {
+    const line = lineOverride && lines.some(l => l.phone_number === lineOverride) ? lineOverride : dialLine;
+    const to = toE164(toOverride || dialTo);
     if (!to) { setError("Escribe un número de 10 dígitos (EE. UU./Canadá)"); return; }
-    if (!dialLine) { setError("Primero agrega una empresa en la pestaña Empresas"); return; }
+    if (!line) { setError("Primero agrega una empresa en la pestaña Empresas"); return; }
     if (!deviceRef.current) { setError("El teléfono no está conectado. Pulsa Conectar."); return; }
     if (activeRef.current || incoming) { setError("Ya hay una llamada en curso"); return; }
     if (wrapUp) { setError("Guarda la nota de la llamada anterior primero"); return; }
     setError("");
-    const business = lines.find(l => l.phone_number === dialLine)?.business_name || "";
+    const business = lines.find(l => l.phone_number === line)?.business_name || "";
     try {
-      const call = await deviceRef.current.connect({ params: { To: to, Line: dialLine } });
+      const call = await deviceRef.current.connect({ params: { To: to, Line: line } });
       activeRef.current = call;
       setActive(call);
       connectedRef.current = false;
@@ -226,7 +245,7 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
         clearInterval(timerRef.current);
         timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
         api("/api/twilio/agent-status", { inCall: true }).catch(() => {});
-        onCallStart?.({ callSid: call.parameters?.CallSid, from: to, to: dialLine, business, lang: "" });
+        onCallStart?.({ callSid: call.parameters?.CallSid, from: to, to: line, business, lang: "" });
       });
       call.on("disconnect", endCall);
       call.on("cancel", endCall);
@@ -351,7 +370,7 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
                 <button onClick={() => setShowPad(s => !s)} style={{ ...dark, width: 42, flex: "0 0 42px", cursor: "pointer" }} title="Teclado">⌨</button>
               </div>
               {showPad && <Keypad onPress={pressKey} />}
-              <button onClick={callOut} style={{ ...btn(C.green), width: "100%", opacity: !dialTo.trim() || !dialLine ? 0.5 : 1 }}>
+              <button onClick={() => callOut()} style={{ ...btn(C.green), width: "100%", opacity: !dialTo.trim() || !dialLine ? 0.5 : 1 }}>
                 📞 Llamar
               </button>
             </div>

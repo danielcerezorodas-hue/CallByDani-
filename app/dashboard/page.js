@@ -5,6 +5,7 @@ import { supabase } from "../supabase";
 import { C, primaryBtn, button, api } from "./ui";
 import { AgreementStep, SignedAgreements } from "./Agreement";
 import { OnboardingForm, OnboardingChecklist, Documents } from "./Onboarding";
+import ClientActivity from "./ClientActivity";
 
 // Minutos incluidos por plan (solo el plan de IA tiene límite)
 const INCLUDED_MINUTES = { ai_receptionist: 600 };
@@ -94,6 +95,41 @@ function Recording({ callId, type, label }) {
         {state === "loading" ? "Loading..." : `▶ ${label}`}
       </button>
       {state === "error" && <span style={{ color: C.red, fontSize: 12, marginLeft: 10 }}>Couldn't load the audio</span>}
+    </div>
+  );
+}
+
+// Pagos: abre el portal de Stripe (tarjeta y facturas). Cancelar es por correo (aviso de 30 días).
+const BILLING_EMAIL = "daniel.cerezo@callbydani.com";
+
+function BillingCard() {
+  const [state, setState] = useState("idle"); // idle | loading | error
+  const [error, setError] = useState("");
+
+  async function openPortal() {
+    setState("loading"); setError("");
+    const { ok, json } = await api("/api/client/billing", { method: "POST" });
+    if (ok && json.url) { window.location.href = json.url; return; }
+    setState("error"); setError(json.error || "Something went wrong. Please try again.");
+  }
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "18px 20px", maxWidth: 760, margin: "0 auto 14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 15 }}>Billing</div>
+          <div style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>Update your card and download your invoices.</div>
+        </div>
+        <button onClick={openPortal} disabled={state === "loading"} style={{ ...button("primary", state === "loading"), padding: "9px 16px", fontSize: 13 }}>
+          {state === "loading" ? "Opening..." : "Manage billing →"}
+        </button>
+      </div>
+      {error && <div style={{ color: C.red, fontSize: 12, marginTop: 10 }}>⚠ {error}</div>}
+      <div style={{ color: C.muted, fontSize: 12, marginTop: 12, lineHeight: 1.6 }}>
+        Need to cancel? Email us at{" "}
+        <a href={`mailto:${BILLING_EMAIL}?subject=${encodeURIComponent("Cancellation request")}`} style={{ color: C.sky }}>{BILLING_EMAIL}</a>.
+        See our <a href="/terms" style={{ color: C.sky }}>Terms</a> for notice periods.
+      </div>
     </div>
   );
 }
@@ -267,7 +303,7 @@ export default function Dashboard() {
 
   const tabs = [
     { id: "calls", label: "Calls", locked },
-    ...(isAdminView ? [] : [{ id: "documents", label: "Documents" }, { id: "settings", label: "Settings" }]),
+    ...(isAdminView ? [] : [{ id: "activity", label: "Calendar & Activity", locked }, { id: "documents", label: "Documents" }, { id: "settings", label: "Settings" }]),
   ];
 
   return page(
@@ -310,6 +346,8 @@ export default function Dashboard() {
         </div>
       )}
 
+      {tab === "activity" && !isAdminView && <ClientActivity locked={locked} />}
+
       {tab === "documents" && !isAdminView && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", maxWidth: 760, margin: "0 auto" }}>
           <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 6 }}>Documents</div>
@@ -331,6 +369,8 @@ export default function Dashboard() {
               <button onClick={() => setShowSigned(true)} style={{ ...button("ghost"), padding: "9px 14px", fontSize: 13 }}>View signed agreement</button>
             </div>
           </div>
+          <BillingCard />
+
           {setupDone
             ? <OnboardingForm key="settings" initial={setup} onSaved={onSaved} onDocumentsChange={onDocumentsChange} />
             : <div style={{ color: C.muted, fontSize: 14, textAlign: "center" }}>Finish your setup above to edit it here.</div>}
