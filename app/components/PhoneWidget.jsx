@@ -147,7 +147,9 @@ export default function PhoneWidget({ onCallStart, onCallEnd, onIncoming, wrapUp
 
       await device.register();
       deviceRef.current = device;
-      await api("/api/twilio/agent-status", { online: true });
+      // Al conectarse no está en ninguna llamada: limpia un "en llamada" que haya quedado pegado
+      // (si cerró la pestaña a media llamada), o nunca le volverían a entrar llamadas
+      await api("/api/twilio/agent-status", { online: true, inCall: false });
       heartbeatRef.current = setInterval(() => {
         api("/api/twilio/agent-status", { online: true }).catch(() => {});
       }, HEARTBEAT_MS);
