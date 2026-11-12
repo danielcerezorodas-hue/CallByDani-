@@ -1,11 +1,21 @@
-import { supabase } from "./supabase";
-
-// Guarda un prospecto en la tabla "leads" de Supabase.
+// Guarda un prospecto en la tabla "leads" (por /api/leads, que también le avisa al admin por correo).
 // Devuelve null si todo salió bien, o el error si algo falló.
 export async function saveLead(data) {
-  const { error } = await supabase.from("leads").insert([data]);
-  if (error) console.error("Supabase lead error:", error);
-  return error;
+  try {
+    const res = await fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) return null;
+    const body = await res.json().catch(() => ({}));
+    const error = new Error(body.error || `Error ${res.status}`);
+    console.error("Lead error:", error.message);
+    return error;
+  } catch (error) {
+    console.error("Lead error:", error);
+    return error;
+  }
 }
 
 export function isValidEmail(email) {
